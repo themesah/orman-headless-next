@@ -31,12 +31,16 @@ interface Hreflang {
     hreflang: string;
     uri: string;
 }
-/** `addons.seo` of GET /site: what robots.txt needs. */
+/** `addons.seo` of GET /site: what robots.txt needs, and the search engines' site-verification codes (only those set). */
 interface SeoSite {
     robots: {
         sitemap?: boolean;
         humans?: string;
         indexing: 'index' | 'noindex';
+    };
+    verification?: {
+        google?: string;
+        bing?: string;
     };
 }
 interface ContentPage extends Tagged {
