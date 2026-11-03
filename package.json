@@ -1,0 +1,47 @@
+{
+  "name": "@orman/headless-next",
+  "version": "0.1.0",
+  "description": "Frontend kit for Orman Headless sites on Next.js: typed read client, proxy helpers, first components.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./types": { "types": "./dist/types.d.ts", "import": "./dist/types.js" },
+    "./client": { "types": "./dist/client.d.ts", "import": "./dist/client.js" },
+    "./proxy": { "types": "./dist/proxy.d.ts", "import": "./dist/proxy.js" },
+    "./csrf": { "types": "./dist/csrf.d.ts", "import": "./dist/csrf.js" },
+    "./form": { "types": "./dist/form.d.ts", "import": "./dist/form.js" },
+    "./maintenance-page": { "types": "./dist/maintenance-page.d.ts", "import": "./dist/maintenance-page.js" },
+    "./roadmap": { "types": "./dist/roadmap.d.ts", "import": "./dist/roadmap.js" },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepare-tag": "pnpm typecheck && pnpm test && pnpm build"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "server-only": "*"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "jsdom": "^30.1.3",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
+  },
+  "packageManager": "pnpm@10.27.0"
+}
