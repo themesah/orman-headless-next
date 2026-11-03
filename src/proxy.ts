@@ -15,8 +15,11 @@ export const FORWARDED = /^\/(?:!|img|assets)(?:\/|$)/
  * proxy appended (the right-most) is trustworthy.
  */
 export function clientIp(headers: Headers): string | null {
-  const vercel = first(headers.get('x-vercel-forwarded-for')) ?? first(headers.get('x-real-ip'))
-  if (vercel) return vercel
+  // Only on Vercel are these set by the platform; anywhere else a visitor can send them and pick their own IP.
+  if (process.env.VERCEL) {
+    const vercel = first(headers.get('x-vercel-forwarded-for')) ?? first(headers.get('x-real-ip'))
+    if (vercel) return vercel
+  }
   const chain = headers.get('x-forwarded-for')?.split(',').map(s => s.trim()).filter(Boolean)
   return chain?.length ? chain[chain.length - 1] : null
 }

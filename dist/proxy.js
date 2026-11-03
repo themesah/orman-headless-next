@@ -3,8 +3,10 @@ import { NextResponse } from "next/server.js";
 var FORWARDED_MATCHER = ["/!/:path*", "/img/:path*", "/assets/:path*"];
 var FORWARDED = /^\/(?:!|img|assets)(?:\/|$)/;
 function clientIp(headers) {
-  const vercel = first(headers.get("x-vercel-forwarded-for")) ?? first(headers.get("x-real-ip"));
-  if (vercel) return vercel;
+  if (process.env.VERCEL) {
+    const vercel = first(headers.get("x-vercel-forwarded-for")) ?? first(headers.get("x-real-ip"));
+    if (vercel) return vercel;
+  }
   const chain = headers.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
   return chain?.length ? chain[chain.length - 1] : null;
 }

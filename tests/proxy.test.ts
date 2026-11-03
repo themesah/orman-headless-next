@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server.js'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { clientIp, forwardToOrman, gated, noopGate, runGates, FORWARDED, type ProxyGate } from '../src/proxy'
 
 const OPTS = { origin: 'https://origin.test', edgeSecret: 'edge-secret' }
@@ -8,6 +8,12 @@ const forward = (path: string, headers: Record<string, string> = {}, options = O
 // Next carries the rewrite target and the overridden request headers on the response.
 const target = (res: Response) => res.headers.get('x-middleware-rewrite')
 const sent = (res: Response, name: string) => res.headers.get(`x-middleware-request-${name}`)
+
+// Runs as on Vercel unless a test says otherwise.
+beforeEach(() => {
+  vi.unstubAllEnvs()
+  vi.stubEnv('VERCEL', '1')
+})
 
 describe('forwardToOrman', () => {
   it('rewrites to the origin keeping path and query', () => {
@@ -91,6 +97,10 @@ describe('clientIp', () => {
   it('prefers the platform headers', () => {
     expect(clientIp(new Headers({ 'x-vercel-forwarded-for': '1.1.1.1, 2.2.2.2', 'x-real-ip': '3.3.3.3' }))).toBe('1.1.1.1')
     expect(clientIp(new Headers({ 'x-real-ip': '3.3.3.3' }))).toBe('3.3.3.3')
+  })
+  it('ignores the platform headers off Vercel, where a visitor can send them', () => {
+    vi.stubEnv('VERCEL', '')
+    expect(clientIp(new Headers({ 'x-vercel-forwarded-for': '6.6.6.6', 'x-real-ip': '6.6.6.6', 'x-forwarded-for': '6.6.6.6, 10.0.0.9' }))).toBe('10.0.0.9')
   })
   it('is null without any', () => {
     expect(clientIp(new Headers())).toBeNull()
