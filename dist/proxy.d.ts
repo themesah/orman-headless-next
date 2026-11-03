@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server.js';
 
-/** The routes a frontend hands to Orman: its own `/!/` routes, Glide images and uploaded files. */
+/**
+ * The routes a frontend hands to Orman: its own `/!/` routes, Glide images and uploaded files. For reference and tests only:
+ * Next reads `config.matcher` statically at build time, so `proxy.ts` must write the literal out (a spread fails the build).
+ */
 declare const FORWARDED_MATCHER: readonly ["/!/:path*", "/img/:path*", "/assets/:path*"];
 /** Matches a path the matcher above covers; for a `proxy()` that also does other work (redirects) on other URLs. */
 declare const FORWARDED: RegExp;

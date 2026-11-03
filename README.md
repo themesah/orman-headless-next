@@ -53,10 +53,11 @@ statuses throw `Orman <status> for <path>`.
 ## `proxy.ts`
 
 ```ts
-import { forwardToOrman, FORWARDED_MATCHER } from '@orman/headless-next/proxy'
+import { forwardToOrman } from '@orman/headless-next/proxy'
 import type { NextRequest } from 'next/server'
 
-export const config = { matcher: [...FORWARDED_MATCHER] }
+// Next reads the matcher statically at build time: write it out, do not spread it from the kit.
+export const config = { matcher: ['/!/:path*', '/img/:path*', '/assets/:path*'] }
 export const proxy = (req: NextRequest) => forwardToOrman(req)
 ```
 
