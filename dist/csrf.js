@@ -39,13 +39,28 @@ function fieldErrors(body) {
   }
   return Object.keys(out).length ? out : void 0;
 }
+function withQuery(url, data) {
+  const params = new URLSearchParams();
+  const entries = data instanceof FormData ? [...data.entries()] : Object.entries(data);
+  for (const [key, value] of entries) {
+    if (value === void 0 || value === null || value instanceof Blob) continue;
+    for (const v of Array.isArray(value) ? value : [value]) params.append(key, String(v));
+  }
+  const qs = params.toString();
+  return qs ? `${url}${url.includes("?") ? "&" : "?"}${qs}` : url;
+}
 async function api(method, url, data, options = {}) {
   const messages = options.messages;
   try {
     const headers = { Accept: "application/json" };
     let body;
-    if (method !== "GET") headers["X-CSRF-TOKEN"] = await csrfToken(options.csrfUrl);
-    if (data instanceof FormData) {
+    if (method === "GET") {
+      if (data) url = withQuery(url, data);
+    } else {
+      headers["X-CSRF-TOKEN"] = await csrfToken(options.csrfUrl);
+    }
+    if (method === "GET") {
+    } else if (data instanceof FormData) {
       body = data;
     } else if (data) {
       headers["Content-Type"] = "application/json";

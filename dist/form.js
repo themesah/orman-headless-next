@@ -43,13 +43,28 @@ function fieldErrors(body) {
   }
   return Object.keys(out).length ? out : void 0;
 }
+function withQuery(url, data) {
+  const params = new URLSearchParams();
+  const entries = data instanceof FormData ? [...data.entries()] : Object.entries(data);
+  for (const [key, value] of entries) {
+    if (value === void 0 || value === null || value instanceof Blob) continue;
+    for (const v of Array.isArray(value) ? value : [value]) params.append(key, String(v));
+  }
+  const qs = params.toString();
+  return qs ? `${url}${url.includes("?") ? "&" : "?"}${qs}` : url;
+}
 async function api(method, url, data, options = {}) {
   const messages = options.messages;
   try {
     const headers = { Accept: "application/json" };
     let body;
-    if (method !== "GET") headers["X-CSRF-TOKEN"] = await csrfToken(options.csrfUrl);
-    if (data instanceof FormData) {
+    if (method === "GET") {
+      if (data) url = withQuery(url, data);
+    } else {
+      headers["X-CSRF-TOKEN"] = await csrfToken(options.csrfUrl);
+    }
+    if (method === "GET") {
+    } else if (data instanceof FormData) {
       body = data;
     } else if (data) {
       headers["Content-Type"] = "application/json";
@@ -97,7 +112,7 @@ function Form({ action, method = "POST", json = false, prepare, onSuccess, onErr
       setState({ pending: false, message: error instanceof Error ? error.message : String(error), errors: {}, done: false });
       return;
     }
-    const payload = json ? Object.fromEntries(data.entries()) : data;
+    const payload = json ? formDataToJson(data) : data;
     const result = await api(method, action, payload, apiOptions);
     if (result.ok) {
       setState({ pending: false, message: null, errors: {}, done: true });
@@ -112,6 +127,14 @@ function Form({ action, method = "POST", json = false, prepare, onSuccess, onErr
     typeof children === "function" ? children(state) : children,
     state.message ? /* @__PURE__ */ jsx("p", { className: "orman-form__message", role: "alert", children: state.message }) : null
   ] }) });
+}
+function formDataToJson(data) {
+  const out = {};
+  for (const [key, value] of data.entries()) {
+    if (!(key in out)) out[key] = value;
+    else out[key] = [].concat(out[key], value);
+  }
+  return out;
 }
 function FieldError({ name, className }) {
   const id = useId();

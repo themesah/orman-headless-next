@@ -78,6 +78,17 @@ function fieldErrors(body: unknown): Record<string, string[]> | undefined {
   return Object.keys(out).length ? out : undefined
 }
 
+function withQuery(url: string, data: Record<string, unknown> | FormData): string {
+  const params = new URLSearchParams()
+  const entries = data instanceof FormData ? [...data.entries()] : Object.entries(data)
+  for (const [key, value] of entries) {
+    if (value === undefined || value === null || value instanceof Blob) continue
+    for (const v of Array.isArray(value) ? value : [value]) params.append(key, String(v))
+  }
+  const qs = params.toString()
+  return qs ? `${url}${url.includes('?') ? '&' : '?'}${qs}` : url
+}
+
 /**
  * JSON in, JSON out. `data` as FormData is sent as multipart. Never throws: a transport failure is an ordinary `{ ok: false }`.
  */
@@ -91,8 +102,15 @@ export async function api<T = unknown>(
   try {
     const headers: Record<string, string> = { Accept: 'application/json' }
     let body: BodyInit | undefined
-    if (method !== 'GET') headers['X-CSRF-TOKEN'] = await csrfToken(options.csrfUrl)
-    if (data instanceof FormData) {
+    if (method === 'GET') {
+      // A GET cannot carry a body (fetch rejects it), so its data goes into the query string.
+      if (data) url = withQuery(url, data)
+    } else {
+      headers['X-CSRF-TOKEN'] = await csrfToken(options.csrfUrl)
+    }
+    if (method === 'GET') {
+      // no body
+    } else if (data instanceof FormData) {
       body = data
     } else if (data) {
       headers['Content-Type'] = 'application/json'

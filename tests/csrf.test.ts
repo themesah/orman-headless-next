@@ -29,6 +29,14 @@ describe('api', () => {
     expect(f).toHaveBeenCalledTimes(1)
   })
 
+  it('puts GET data in the query string, never a body', async () => {
+    const f = vi.fn<typeof fetch>(async () => json(200, {}))
+    vi.stubGlobal('fetch', f)
+    expect(await api('GET', '/!/search?site=en', { q: 'a b', tags: ['x', 'y'], skip: undefined })).toMatchObject({ ok: true })
+    expect(f.mock.calls[0][0]).toBe('/!/search?site=en&q=a+b&tags=x&tags=y')
+    expect((f.mock.calls[0][1] as RequestInit).body).toBeUndefined()
+  })
+
   it('sends FormData without a JSON content type', async () => {
     const f = vi.fn<typeof fetch>(async url => (url === '/!/csrf-token' ? json(200, { csrf_token: 't' }) : json(200, {})))
     vi.stubGlobal('fetch', f)

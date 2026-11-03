@@ -57,7 +57,7 @@ export function Form({ action, method = 'POST', json = false, prepare, onSuccess
       setState({ pending: false, message: error instanceof Error ? error.message : String(error), errors: {}, done: false })
       return
     }
-    const payload = json ? (Object.fromEntries(data.entries()) as Record<string, unknown>) : data
+    const payload = json ? formDataToJson(data) : data
     const result = await api(method, action, payload, apiOptions)
     if (result.ok) {
       setState({ pending: false, message: null, errors: {}, done: true })
@@ -82,6 +82,16 @@ export function Form({ action, method = 'POST', json = false, prepare, onSuccess
       </form>
     </FormContext.Provider>
   )
+}
+
+/** FormData as a JSON object; a name that repeats (checkboxes, a multi-select) becomes an array instead of keeping only its last value. */
+function formDataToJson(data: FormData): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of data.entries()) {
+    if (!(key in out)) out[key] = value
+    else out[key] = ([] as unknown[]).concat(out[key], value)
+  }
+  return out
 }
 
 /** The messages for one field of the enclosing {@link Form}; renders nothing when there are none. */

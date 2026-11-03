@@ -65,6 +65,14 @@ describe('<Form>', () => {
     expect((f.mock.calls[1][1] as RequestInit).body).toBe('{"email":"a@b.test"}')
   })
 
+  it('keeps every value of a repeated name in JSON', async () => {
+    const f = stub(json(200, {}))
+    const { container } = contact({ json: true, prepare: (d: FormData) => void d.append('email', 'c@d.test') })
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(f).toHaveBeenCalledTimes(2))
+    expect((f.mock.calls[1][1] as RequestInit).body).toBe('{"email":["a@b.test","c@d.test"]}')
+  })
+
   it('prepare can add fields, and a throw stops the post', async () => {
     const f = stub(json(200, {}))
     const first = contact({ prepare: (d: FormData) => void d.set('captcha', 'T') })
