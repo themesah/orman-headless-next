@@ -1,18 +1,22 @@
 import * as react from 'react';
 import { ComponentPropsWithoutRef, ReactNode } from 'react';
+import { MaintenanceSite } from './types.js';
 
 interface MaintenancePageProps extends Omit<ComponentPropsWithoutRef<'main'>, 'title'> {
+    /** `addons.maintenance` of `/site`: the title, message, countdown, price, contact and the two forms come from it. */
+    site?: Partial<MaintenanceSite>;
+    /** Overrides the title / message from `site` (or stands in for them without it). */
     title?: ReactNode;
-    /** The explanation under the title. */
     message?: ReactNode;
-    /** Extra content, e.g. the unlock or "notify me" form once 6.4 provides it. */
+    /** Extra content under the page. */
     children?: ReactNode;
 }
 /**
- * What a gate answers with while maintenance is on. Unstyled and without client code, so it works as a server component and
- * as the body of a 503 answer. Class hooks: `orman-maintenance`, `__title`, `__message`, `__extra`.
- * (Countdown, the e-mail list form and the unlock field come with the Maintenance gate in 6.4.)
+ * What a gate answers with while maintenance is on. Without client code of its own (the two forms are `<Form>`s), so it works as a
+ * server component and as the body of a 503 answer. Class hooks: `orman-maintenance`, `__title`, `__message`, `__countdown`,
+ * `__price`, `__contact`, `__subscribe`, `__unlock`, `__extra`. `renderMaintenanceHtml()` produces the same markup as a string, for
+ * a `proxy.ts` that cannot render React.
  */
-declare function MaintenancePage({ title, message, children, className, ...rest }: MaintenancePageProps): react.JSX.Element;
+declare function MaintenancePage({ site, title, message, children, className, ...rest }: MaintenancePageProps): react.JSX.Element;
 
 export { MaintenancePage, type MaintenancePageProps };

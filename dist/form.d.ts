@@ -11,6 +11,16 @@ interface FormState {
     /** True after a successful submit until the next one. */
     done: boolean;
 }
+/**
+ * A piece inside a {@link Form} that has to act on submit: a captcha adds its token to the data (`prepare`, may throw to stop with a
+ * message) and asks for a fresh challenge after every attempt (`reset`: tokens are single use).
+ */
+interface FormHook {
+    prepare?: (data: FormData) => void | Promise<void>;
+    reset?: () => void;
+}
+/** Registers a {@link FormHook} with the enclosing {@link Form} while the component is mounted. A no-op outside a Form. */
+declare function useFormHook(hook: FormHook): void;
 /** The form's current state, for a child that renders its own pieces (a submit button that disables while pending). */
 declare function useFormState(): FormState;
 interface FormProps extends Omit<React.ComponentPropsWithoutRef<'form'>, 'action' | 'method' | 'onSubmit' | 'children' | 'onError'> {
@@ -47,4 +57,4 @@ declare function FieldError({ name, className }: {
     className?: string;
 }): react.JSX.Element | null;
 
-export { FieldError, Form, type FormProps, type FormState, useFormState };
+export { FieldError, Form, type FormHook, type FormProps, type FormState, useFormHook, useFormState };

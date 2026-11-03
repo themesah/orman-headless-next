@@ -1,5 +1,5 @@
 import 'server-only'
-import type { EntriesResponse, GlobalsResponse, NavResponse, PageResponse, PathsResponse, SiteResponse, Tagged, TreeResponse } from './types'
+import type { EntriesResponse, FormResponse, GlobalsResponse, NavResponse, PageResponse, PathsResponse, SiteResponse, Tagged, TreeResponse } from './types'
 
 const DEFAULT_PREFIX = '/api/headless/v1'
 
@@ -39,6 +39,8 @@ export function tagsForPath(path: string): string[] {
     if (uri) tags.push(`path:${uri}`)
   } else if (segments[0] === 'paths') {
     tags.push('paths')
+  } else if (segments[0] === 'forms' && segments[1]) {
+    tags.push(`form:${decodeURIComponent(segments[1])}`)
   } else if (segments[0] === 'site') {
     tags.push('site')
   } else if (segments[0] === 'collections' && segments[1]) {
@@ -71,6 +73,8 @@ export interface OrmanClient {
   /** A 404 is data (`{ type: 'not_found' }`), cached like any page so publishing refreshes it. */
   page(uri: string, query?: { site?: string }, options?: GetOptions): Promise<PageResponse>
   site(query?: { site?: string }, options?: GetOptions): Promise<SiteResponse>
+  /** A form's schema (fields, honeypot name, captcha kind), tagged `form:<handle>`. A 404 is data (`{ type: 'not_found' }`). */
+  form(handle: string, options?: GetOptions): Promise<FormResponse>
   /** One global set when `handle` is given, else the list. */
   globals(handle?: string, query?: { site?: string }, options?: GetOptions): Promise<GlobalsResponse>
   navs(handle: string, query?: { site?: string }, options?: GetOptions): Promise<NavResponse>
@@ -126,6 +130,7 @@ export function createOrmanClient(options: ClientOptions): OrmanClient {
     paths: (query, o) => call<PathsResponse>('/paths', query, o),
     page: (uri, query, o) => call<PageResponse>('/page', { uri, ...query }, o),
     site: (query, o) => call<SiteResponse>('/site', query, o),
+    form: (handle, o) => get<FormResponse>(`/forms/${encodeURIComponent(handle)}`, o),
     globals: (handle, query, o) => call<GlobalsResponse>(handle ? `/globals/${encodeURIComponent(handle)}` : '/globals', query, o),
     navs: (handle, query, o) => call<NavResponse>(`/navs/${encodeURIComponent(handle)}`, query, o),
     trees: (handle, query, o) =>

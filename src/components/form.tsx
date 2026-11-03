@@ -1,4 +1,4 @@
-import { createContext, useContext, useId, useState, type FormEvent, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { api, type ApiOptions, type ApiResult } from '../csrf'
 
 export interface FormState {
@@ -9,6 +9,26 @@ export interface FormState {
   errors: Record<string, string[]>
   /** True after a successful submit until the next one. */
   done: boolean
+}
+
+/**
+ * A piece inside a {@link Form} that has to act on submit: a captcha adds its token to the data (`prepare`, may throw to stop with a
+ * message) and asks for a fresh challenge after every attempt (`reset`: tokens are single use).
+ */
+export interface FormHook {
+  prepare?: (data: FormData) => void | Promise<void>
+  reset?: () => void
+}
+
+type Register = (hook: FormHook) => () => void
+const HookContext = createContext<Register | null>(null)
+
+/** Registers a {@link FormHook} with the enclosing {@link Form} while the component is mounted. A no-op outside a Form. */
+export function useFormHook(hook: FormHook): void {
+  const register = useContext(HookContext)
+  const latest = useRef(hook)
+  latest.current = hook
+  useEffect(() => register?.({ prepare: data => latest.current.prepare?.(data), reset: () => latest.current.reset?.() }), [register])
 }
 
 const EMPTY: FormState = { pending: false, message: null, errors: {}, done: false }
@@ -45,6 +65,11 @@ export interface FormProps extends Omit<React.ComponentPropsWithoutRef<'form'>, 
  */
 export function Form({ action, method = 'POST', json = false, prepare, onSuccess, onError, api: apiOptions, children, className, ...rest }: FormProps) {
   const [state, setState] = useState<FormState>(EMPTY)
+  const hooks = useRef(new Set<FormHook>())
+  const register = useRef<Register>(hook => {
+    hooks.current.add(hook)
+    return () => void hooks.current.delete(hook)
+  }).current
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -53,24 +78,33 @@ export function Form({ action, method = 'POST', json = false, prepare, onSuccess
     let data = new FormData(event.currentTarget)
     try {
       data = (await prepare?.(data)) ?? data
+      for (const hook of hooks.current) await hook.prepare?.(data)
     } catch (error) {
       setState({ pending: false, message: error instanceof Error ? error.message : String(error), errors: {}, done: false })
       return
     }
     const payload = json ? formDataToJson(data) : data
     const result = await api(method, action, payload, apiOptions)
+    // A captcha token or challenge is spent by the attempt, whatever its outcome.
+    for (const hook of hooks.current) hook.reset?.()
     if (result.ok) {
       setState({ pending: false, message: null, errors: {}, done: true })
       onSuccess?.(result)
     } else {
-      // A 422's field messages are shown at their fields; the general message only when there are none.
-      setState({ pending: false, message: result.errors ? null : result.message, errors: result.errors ?? {}, done: false })
+      // A 422's field messages are shown at their fields. Messages Laravel keys by position (`errors: { "0": [..] }`, what an addon's
+      // ValidationException::withMessages([text]) gives, e.g. a refused Turnstile token) have no field: they are the general message.
+      const errors = result.errors ?? {}
+      const general = Object.entries(errors).filter(([key]) => /^\d+$/.test(key)).flatMap(([, messages]) => messages)
+      const named = Object.fromEntries(Object.entries(errors).filter(([key]) => !/^\d+$/.test(key)))
+      const message = general[0] ?? (Object.keys(named).length ? null : result.message)
+      setState({ pending: false, message, errors: named, done: false })
       onError?.(result)
     }
   }
 
   const classes = ['orman-form', state.pending && 'orman-form--pending', state.done && 'orman-form--done', className].filter(Boolean).join(' ')
   return (
+    <HookContext.Provider value={register}>
     <FormContext.Provider value={state}>
       <form {...rest} className={classes} method="post" action={action} onSubmit={submit} aria-busy={state.pending || undefined}>
         {typeof children === 'function' ? children(state) : children}
@@ -81,6 +115,7 @@ export function Form({ action, method = 'POST', json = false, prepare, onSuccess
         ) : null}
       </form>
     </FormContext.Provider>
+    </HookContext.Provider>
   )
 }
 

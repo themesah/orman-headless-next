@@ -1,4 +1,14 @@
 import { NextRequest } from 'next/server.js';
+import { MaintenanceSite, MaintenanceGate, SiteResponse } from './types.js';
+
+interface MaintenanceHtmlOptions {
+    lang?: string;
+    dir?: 'ltr' | 'rtl';
+    /** Extra markup for `<head>` (a stylesheet link). */
+    head?: string;
+    /** The CSRF address the inline script uses. */
+    csrfUrl?: string;
+}
 
 /**
  * The routes a frontend hands to Orman: its own `/!/` routes, Glide images and uploaded files. For reference and tests only:
@@ -53,5 +63,42 @@ declare const noopGate: ProxyGate;
 declare function runGates(gates: readonly ProxyGate[], req: NextRequest): Promise<Response | undefined>;
 /** Wraps a handler so the gates run first: `proxy = gated([maintenanceGate], req => forwardToOrman(req))`. */
 declare function gated(gates: readonly ProxyGate[], next: (req: NextRequest) => Response | Promise<Response>): (req: NextRequest) => Promise<Response>;
+interface MaintenanceGateOptions {
+    /** Defaults to `process.env.ORMAN_ORIGIN`. */
+    origin?: string;
+    /** Defaults to `process.env.ORMAN_EDGE_SECRET`. */
+    edgeSecret?: string;
+    /** Defaults to the global `fetch`. */
+    fetch?: typeof fetch;
+    /** Extra paths (patterns like `allow_paths`, with or without the leading slash) that stay open. */
+    allow?: readonly string[];
+    /** How long one process keeps the `/site` answer, at most (it never outlives `valid_until`). Default 15 000 ms. */
+    ttlMs?: number;
+    /** Options for the built-in page (`lang`, `dir`, `head`). */
+    page?: MaintenanceHtmlOptions;
+    /** Your own answer instead of the built-in page: a Response with the status and headers you pick. */
+    render?: (context: {
+        site: MaintenanceSite | undefined;
+        gate: MaintenanceGate;
+    }) => Response | Promise<Response>;
+    /** For tests. */
+    now?: () => number;
+}
+/**
+ * The Maintenance gate: while the site is in maintenance mode, a visitor gets the maintenance page (HTTP 503 with `Retry-After`,
+ * `noindex`, `no-store`) instead of the site, unless the path is one of the open ones or Orman recognises the visitor.
+ *
+ * `getSite` returns the (cached) `/site` answer, e.g. `() => orman.site()`; the decision is `gates.maintenance` in it. This process
+ * keeps the answer for `ttlMs` at most, and never past `valid_until` (the moment the window opens or closes by itself). The
+ * editor's change reaches here through `revalidateTag('site')` for the cached client and within `ttlMs` for this memory.
+ *
+ * Open paths: `/!/*` (including `/!/csrf-token`, the form posts and the unlock/subscribe routes), `/img/*`, `/assets/*`, `/_next/*`,
+ * `favicon.ico`, `robots.txt`, the editor's `allow_paths`, and `allow`. A visitor holding the bypass cookie (or, when the CP keeps an
+ * address allow-list, any visitor) is checked by Orman at `/!/maintenance/check`, because the cookie is an HMAC with Orman's key;
+ * a link with `?maintenance_bypass=<key>` is passed on to it and the cookie it sets is returned with a redirect to the clean URL.
+ *
+ * If `/site` cannot be read the gate lets the request through and logs: a broken read API must not take a public site down.
+ */
+declare function maintenanceGate(getSite: () => Promise<SiteResponse>, options?: MaintenanceGateOptions): ProxyGate;
 
-export { FORWARDED, FORWARDED_MATCHER, type ForwardOptions, type ProxyGate, clientIp, forwardToOrman, gated, noopGate, runGates };
+export { FORWARDED, FORWARDED_MATCHER, type ForwardOptions, type MaintenanceGateOptions, type ProxyGate, clientIp, forwardToOrman, gated, maintenanceGate, noopGate, runGates };

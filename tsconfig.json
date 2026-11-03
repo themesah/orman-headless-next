@@ -9,7 +9,12 @@
     "noEmit": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@orman/headless-next/form": ["src/components/form.tsx"],
+      "@orman/headless-next/captcha": ["src/components/captcha.tsx"]
+    }
   },
   "include": ["src", "tests", "*.ts"]
 }

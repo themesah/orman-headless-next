@@ -1,4 +1,4 @@
-import { Tagged, PathsResponse, PageResponse, SiteResponse, GlobalsResponse, NavResponse, TreeResponse, EntriesResponse } from './types.js';
+import { Tagged, PathsResponse, PageResponse, SiteResponse, FormResponse, GlobalsResponse, NavResponse, TreeResponse, EntriesResponse } from './types.js';
 
 interface ClientOptions {
     /** The Orman origin, e.g. `https://orman.example.com`. */
@@ -40,6 +40,8 @@ interface OrmanClient {
     site(query?: {
         site?: string;
     }, options?: GetOptions): Promise<SiteResponse>;
+    /** A form's schema (fields, honeypot name, captcha kind), tagged `form:<handle>`. A 404 is data (`{ type: 'not_found' }`). */
+    form(handle: string, options?: GetOptions): Promise<FormResponse>;
     /** One global set when `handle` is given, else the list. */
     globals(handle?: string, query?: {
         site?: string;

@@ -65,11 +65,110 @@ export interface PathsResponse extends Tagged {
   meta: { page: number; last_page: number; total: number }
 }
 
-/** GET /site: the enabled contributors with their public blocks (`{}` when an addon has none). */
+/** GET /site: the enabled contributors with their public blocks (`{}` when an addon has none), and the request gates' decisions. */
 export interface SiteResponse extends Tagged {
   contract_version: number
   site: string
-  addons: Record<string, Record<string, unknown>>
+  addons: Record<string, Record<string, unknown>> & { turnstile?: TurnstileSite; kaptcha?: KaptchaSite; maintenance?: MaintenanceSite }
+  /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
+  gates?: { maintenance?: MaintenanceGate } & Record<string, unknown>
+}
+
+/** `addons.turnstile`: everything the widget needs. The secret key never leaves Orman. */
+export interface TurnstileSite {
+  sitekey: string
+  /** The Cloudflare script to load (explicit rendering). */
+  script: string
+  /** The form field the token is posted as (`cf-turnstile-response`). */
+  field: string
+  protects: { forms: boolean; registration: boolean }
+}
+
+/** `addons.kaptcha`: which surfaces are protected and how to fetch a challenge. The answer is never published. */
+export interface KaptchaSite {
+  surfaces: { forms: boolean; user_login: boolean; user_registration: boolean; password_reset: boolean }
+  /** `POST` here (with the CSRF token) for `{ token, image, expires_in }`; never render or cache it on the server. */
+  challenge: string
+  width: number
+  height: number
+  /** The two body fields: the typed `answer`, and the `challenge` token. */
+  fields: { answer: string; challenge: string }
+}
+
+/** `gates.maintenance`: may the frontend show pages? */
+export interface MaintenanceGate {
+  active: boolean
+  /** 503 normally, 200 when the editor chose to answer 200. */
+  status: number
+  retry_after: number | null
+  /** ISO 8601: when the window opens or closes by itself. A cached decision must not outlive it. */
+  valid_until: string | null
+  /** Paths (no leading slash, `*` wildcard) that stay open. */
+  allow_paths: string[]
+  bypass: { cookie: string; param: string; unlock: string; check: string; check_all: boolean }
+}
+
+/** `addons.maintenance`: the page's public content. */
+export interface MaintenanceSite {
+  type: 'maintenance' | 'coming_soon' | 'sell_domain' | 'none'
+  title: string
+  message: BardValue
+  ends_at: string | null
+  show_countdown: boolean
+  price: string
+  contact_email: string
+  collect_emails: boolean
+  has_access: boolean
+  subscribe: string
+  unlock: string
+  labels: Record<string, string>
+  lang?: string
+  dir?: 'ltr' | 'rtl'
+}
+
+/** One field of a form as `GET /forms/{handle}` describes it (an allowlist: no recipients, no storage settings). */
+export interface FormFieldSchema {
+  handle: string
+  type: string
+  display: string
+  instructions: string | null
+  required: boolean
+  /** The rules a browser can check; database and pattern rules stay on the server. */
+  validate: string[]
+  placeholder?: string | null
+  input_type?: string | null
+  multiple?: boolean
+  inline?: boolean
+  max_files?: number
+  character_limit?: number
+  rows?: number
+  min?: number
+  max?: number
+  step?: number
+  prepend?: string
+  append?: string
+  default?: string | number | boolean | null
+  options?: { value: string; label: string }[]
+}
+
+export interface FormCaptcha {
+  kind: 'turnstile' | 'kaptcha'
+  /** The captcha field's handle in the blueprint (not posted: the widget decides its field names). */
+  handle: string
+}
+
+export interface FormSchema {
+  handle: string
+  title: string
+  /** The hidden field bots fill in; a filled one is a silent success on the server. */
+  honeypot: string
+  fields: FormFieldSchema[]
+  captcha: FormCaptcha | null
+  tags: string[]
+}
+
+export interface FormResponse extends Tagged {
+  data: FormSchema
 }
 
 // Globals and listings reuse Orman's built-in API resources; their inner shape depends on the

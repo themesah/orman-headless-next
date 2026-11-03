@@ -31,7 +31,9 @@ git add -A && git commit -m "release vX.Y.Z" && git tag vX.Y.Z
 | `@orman/headless-next/proxy` | `forwardToOrman`, `clientIp`, gates | `proxy.ts` |
 | `@orman/headless-next/csrf` | `api()`: JSON/multipart calls to `/!/` routes with a fresh CSRF token | browser |
 | `@orman/headless-next/form` | `<Form>`, `<FieldError>`, `useFormState` | client component |
-| `@orman/headless-next/maintenance-page` | `<MaintenancePage>` | server or client |
+| `@orman/headless-next/captcha` | `<Captcha>`: Turnstile or Kaptcha, chosen from `/site` | client component |
+| `@orman/headless-next/form-fields` | `<FormFields>`: the form drawn from `client.form(handle)` | client component |
+| `@orman/headless-next/maintenance-page` | `<MaintenancePage site>` | server or client |
 | `@orman/headless-next/roadmap` | `COMPONENT_ROADMAP`: what is planned and in which wave | anywhere |
 
 ## Read client
@@ -95,6 +97,40 @@ import { Form, FieldError } from '@orman/headless-next/form'
 
 Class hooks: `orman-form`, `--pending`, `--done`, `orman-form__message` (general failure), `orman-form__error` with `data-field`. `prepare(formData)` is where a captcha adds its token.
 
+## Forms from the blueprint: `client.form`, `<FormFields>`, `<Captcha>`
+
+```tsx
+// app/contact/page.tsx (server)
+const { data: form } = await orman.form('contact')   // tag form:contact: a blueprint change revalidates it
+const { addons } = await orman.site()
+
+<Form action="/!/forms/contact" onSuccess={...}>
+  <FormFields form={form} />                       {/* fields, labels, instructions, options, honeypot */}
+  <Captcha site={addons} form={form} surface="forms" />   {/* adds the token under the field names the Blade forms use */}
+  <button type="submit">Send</button>
+</Form>
+```
+
+`<Captcha>` renders nothing when the site has no captcha for that surface. Turnstile loads Cloudflare's script on demand; Kaptcha fetches a challenge from
+`/!/kaptcha/challenge` and shows its image. Both put their token into the post through `<Form>`'s hooks and reset after every request. Only the public
+key and settings come from `/site`; secrets stay in Orman.
+
+## Maintenance: `maintenanceGate`
+
+```ts
+// proxy.ts
+import { maintenanceGate } from '@orman/headless-next/proxy'
+const gate = maintenanceGate(() => orman.site(), { origin: process.env.ORMAN_ORIGIN, edgeSecret: process.env.ORMAN_EDGE_SECRET })
+export async function proxy(request: NextRequest) {
+  return (await gate(request)) ?? NextResponse.next()
+}
+```
+
+While `gates.maintenance.active` is true every page answers with the status the CP chose (503 + `Retry-After` by default, `noindex`, `no-store`) and the page built from
+`addons.maintenance`. Always open: `/!/*` (so `/!/csrf-token`, the subscribe form and the unlock form work), `/img/*`, `/assets/*`, `/_next/*`, the editor's allowed
+paths and `options.allow`. A visitor with the bypass cookie, or a link carrying the key, is asked at `/!/maintenance/check` (Orman keeps the secrets) and passes.
+If `/site` cannot be read the gate lets requests through and logs it. Pass `render` to answer with your own page.
+
 ## Not built yet
 
-`COMPONENT_ROADMAP` lists `<Captcha>` (6.4), `<Comments>`, `<Inbox>`, `<Login>`, `<SessionGate>` (6.5), `<AddToCart>`/`<Cart>`, `<CodeCheck>` (6.7).
+`COMPONENT_ROADMAP` lists `<Comments>`, `<Inbox>`, `<Login>`, `<SessionGate>` (6.5), `<AddToCart>`/`<Cart>`, `<CodeCheck>` (6.7).

@@ -1,6 +1,6 @@
 "use client";
 // src/components/form.tsx
-import { createContext, useContext, useId, useState } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 
 // src/csrf.ts
 var DEFAULT_MESSAGES = {
@@ -94,6 +94,13 @@ async function api(method, url, data, options = {}) {
 
 // src/components/form.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
+var HookContext = createContext(null);
+function useFormHook(hook) {
+  const register = useContext(HookContext);
+  const latest = useRef(hook);
+  latest.current = hook;
+  useEffect(() => register?.({ prepare: (data) => latest.current.prepare?.(data), reset: () => latest.current.reset?.() }), [register]);
+}
 var EMPTY = { pending: false, message: null, errors: {}, done: false };
 var FormContext = createContext(EMPTY);
 function useFormState() {
@@ -101,6 +108,11 @@ function useFormState() {
 }
 function Form({ action, method = "POST", json = false, prepare, onSuccess, onError, api: apiOptions, children, className, ...rest }) {
   const [state, setState] = useState(EMPTY);
+  const hooks = useRef(/* @__PURE__ */ new Set());
+  const register = useRef((hook) => {
+    hooks.current.add(hook);
+    return () => void hooks.current.delete(hook);
+  }).current;
   async function submit(event) {
     event.preventDefault();
     if (state.pending) return;
@@ -108,25 +120,31 @@ function Form({ action, method = "POST", json = false, prepare, onSuccess, onErr
     let data = new FormData(event.currentTarget);
     try {
       data = await prepare?.(data) ?? data;
+      for (const hook of hooks.current) await hook.prepare?.(data);
     } catch (error) {
       setState({ pending: false, message: error instanceof Error ? error.message : String(error), errors: {}, done: false });
       return;
     }
     const payload = json ? formDataToJson(data) : data;
     const result = await api(method, action, payload, apiOptions);
+    for (const hook of hooks.current) hook.reset?.();
     if (result.ok) {
       setState({ pending: false, message: null, errors: {}, done: true });
       onSuccess?.(result);
     } else {
-      setState({ pending: false, message: result.errors ? null : result.message, errors: result.errors ?? {}, done: false });
+      const errors = result.errors ?? {};
+      const general = Object.entries(errors).filter(([key]) => /^\d+$/.test(key)).flatMap(([, messages]) => messages);
+      const named = Object.fromEntries(Object.entries(errors).filter(([key]) => !/^\d+$/.test(key)));
+      const message = general[0] ?? (Object.keys(named).length ? null : result.message);
+      setState({ pending: false, message, errors: named, done: false });
       onError?.(result);
     }
   }
   const classes = ["orman-form", state.pending && "orman-form--pending", state.done && "orman-form--done", className].filter(Boolean).join(" ");
-  return /* @__PURE__ */ jsx(FormContext.Provider, { value: state, children: /* @__PURE__ */ jsxs("form", { ...rest, className: classes, method: "post", action, onSubmit: submit, "aria-busy": state.pending || void 0, children: [
+  return /* @__PURE__ */ jsx(HookContext.Provider, { value: register, children: /* @__PURE__ */ jsx(FormContext.Provider, { value: state, children: /* @__PURE__ */ jsxs("form", { ...rest, className: classes, method: "post", action, onSubmit: submit, "aria-busy": state.pending || void 0, children: [
     typeof children === "function" ? children(state) : children,
     state.message ? /* @__PURE__ */ jsx("p", { className: "orman-form__message", role: "alert", children: state.message }) : null
-  ] }) });
+  ] }) }) });
 }
 function formDataToJson(data) {
   const out = {};
@@ -145,5 +163,6 @@ function FieldError({ name, className }) {
 export {
   FieldError,
   Form,
+  useFormHook,
   useFormState
 };

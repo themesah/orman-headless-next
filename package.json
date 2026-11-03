@@ -1,6 +1,6 @@
 {
   "name": "@orman/headless-next",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Frontend kit for Orman Headless sites on Next.js: typed read client, proxy helpers, first components.",
   "license": "UNLICENSED",
   "type": "module",
@@ -13,6 +13,8 @@
     "./proxy": { "types": "./dist/proxy.d.ts", "import": "./dist/proxy.js" },
     "./csrf": { "types": "./dist/csrf.d.ts", "import": "./dist/csrf.js" },
     "./form": { "types": "./dist/form.d.ts", "import": "./dist/form.js" },
+    "./captcha": { "types": "./dist/captcha.d.ts", "import": "./dist/captcha.js" },
+    "./form-fields": { "types": "./dist/form-fields.d.ts", "import": "./dist/form-fields.js" },
     "./maintenance-page": { "types": "./dist/maintenance-page.d.ts", "import": "./dist/maintenance-page.js" },
     "./roadmap": { "types": "./dist/roadmap.d.ts", "import": "./dist/roadmap.js" },
     "./package.json": "./package.json"

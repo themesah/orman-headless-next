@@ -10,6 +10,8 @@ function tagsForPath(path) {
     if (uri) tags.push(`path:${uri}`);
   } else if (segments[0] === "paths") {
     tags.push("paths");
+  } else if (segments[0] === "forms" && segments[1]) {
+    tags.push(`form:${decodeURIComponent(segments[1])}`);
   } else if (segments[0] === "site") {
     tags.push("site");
   } else if (segments[0] === "collections" && segments[1]) {
@@ -66,6 +68,7 @@ function createOrmanClient(options) {
     paths: (query, o) => call("/paths", query, o),
     page: (uri, query, o) => call("/page", { uri, ...query }, o),
     site: (query, o) => call("/site", query, o),
+    form: (handle, o) => get(`/forms/${encodeURIComponent(handle)}`, o),
     globals: (handle, query, o) => call(handle ? `/globals/${encodeURIComponent(handle)}` : "/globals", query, o),
     navs: (handle, query, o) => call(`/navs/${encodeURIComponent(handle)}`, query, o),
     trees: (handle, query, o) => call(`/trees/collections/${encodeURIComponent(handle)}`, { site: query?.site, fields: query?.fields?.join(",") }, o),

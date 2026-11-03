@@ -45,6 +45,19 @@ describe('createOrmanClient', () => {
     expect(await client(async () => json(200, body)).site()).toEqual(body)
   })
 
+  it('reads a form schema, tagged form:<handle>', async () => {
+    const f = vi.fn<typeof fetch>(async () => json(200, { data: { handle: 'contact', fields: [], captcha: null }, tags: ['form:contact', 'orman:all'] }))
+    const res = await client(f).form('contact')
+    const [url, init] = f.mock.calls[0] as [string, RequestInit & { next?: unknown }]
+    expect(url).toBe('https://origin.test/api/headless/v1/forms/contact')
+    expect(init.next).toEqual({ tags: ['orman:all', 'form:contact'], revalidate: false })
+    expect(res.data.handle).toBe('contact')
+  })
+
+  it('returns an unknown form as data', async () => {
+    expect(await client(async () => json(404, { type: 'not_found', tags: [] })).form('nope')).toEqual({ type: 'not_found', tags: [] })
+  })
+
   it('builds the other endpoints', async () => {
     const f = vi.fn<typeof fetch>(async () => json(200, { tags: [] }))
     const c = client(f)

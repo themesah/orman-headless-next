@@ -10,6 +10,8 @@ export default defineConfig({
     proxy: 'src/proxy.ts',
     csrf: 'src/csrf.ts',
     form: 'src/components/form.tsx',
+    captcha: 'src/components/captcha.tsx',
+    'form-fields': 'src/components/form-fields.tsx',
     'maintenance-page': 'src/components/maintenance-page.tsx',
     roadmap: 'src/components/roadmap.ts',
   },
@@ -18,15 +20,17 @@ export default defineConfig({
   splitting: false,
   clean: true,
   target: 'es2022',
-  external: ['next', 'react', 'react-dom', 'server-only', /^next\//],
-  // Only the form needs the browser; the directive must survive bundling.
+  // The package's own entries stay external, so `captcha` and `form-fields` use the one `form` (its React context) the app imports.
+  external: ['next', 'react', 'react-dom', 'server-only', /^next\//, /^@orman\/headless-next\//],
+  // The form, the captcha and the field renderer need the browser; the directive must survive bundling.
   esbuildOptions(options) {
     options.jsx = 'automatic'
   },
   async onSuccess() {
     const { readFile, writeFile } = await import('node:fs/promises')
-    const file = 'dist/form.js'
-    const source = await readFile(file, 'utf8')
-    if (!source.startsWith('"use client"')) await writeFile(file, `"use client";\n${source}`)
+    for (const file of ['dist/form.js', 'dist/captcha.js', 'dist/form-fields.js']) {
+      const source = await readFile(file, 'utf8')
+      if (!source.startsWith('"use client"')) await writeFile(file, `"use client";\n${source}`)
+    }
   },
 })
