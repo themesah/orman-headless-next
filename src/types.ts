@@ -18,7 +18,25 @@ export interface Seo {
  * `addons.<handle>`: the block each enabled contributor adds to a page (omitted when empty). The shape is the addon's own,
  * so it is `unknown` here; an addon's components narrow it.
  */
-export type AddonBlocks = Record<string, unknown>
+export type AddonBlocks = Record<string, unknown> & { seo?: SeoExtras }
+
+/** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
+export interface SeoExtras {
+  /** Parsed JSON-LD objects (Organization, Person, BreadcrumbList, the editor's own schema). Render each in `<script type="application/ld+json">`. */
+  json_ld?: Record<string, unknown>[]
+  /** The page in its other languages; `alternates` also lists the page itself and `x-default`. `uri` is a path on the frontend. */
+  hreflang?: { current: string | null; alternates: Hreflang[] }
+}
+
+export interface Hreflang {
+  hreflang: string
+  uri: string
+}
+
+/** `addons.seo` of GET /site: what robots.txt needs. */
+export interface SeoSite {
+  robots: { sitemap?: boolean; humans?: string; indexing: 'index' | 'noindex' }
+}
 
 interface ContentPage extends Tagged {
   site: string
@@ -58,6 +76,10 @@ export interface PathItem {
   uri: string
   updated_at: string
   priority: number
+  /** SEO addon: `always`..`never`; present when the addon is on. */
+  change_frequency?: string
+  /** SEO addon: only on pages that exist in more than one language. */
+  alternates?: Hreflang[]
 }
 
 export interface PathsResponse extends Tagged {
@@ -69,7 +91,7 @@ export interface PathsResponse extends Tagged {
 export interface SiteResponse extends Tagged {
   contract_version: number
   site: string
-  addons: Record<string, Record<string, unknown>> & { turnstile?: TurnstileSite; kaptcha?: KaptchaSite; maintenance?: MaintenanceSite }
+  addons: Record<string, Record<string, unknown>> & { turnstile?: TurnstileSite; kaptcha?: KaptchaSite; maintenance?: MaintenanceSite; seo?: SeoSite }
   /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
   gates?: { maintenance?: MaintenanceGate } & Record<string, unknown>
 }

@@ -14,7 +14,31 @@ interface Seo {
  * `addons.<handle>`: the block each enabled contributor adds to a page (omitted when empty). The shape is the addon's own,
  * so it is `unknown` here; an addon's components narrow it.
  */
-type AddonBlocks = Record<string, unknown>;
+type AddonBlocks = Record<string, unknown> & {
+    seo?: SeoExtras;
+};
+/** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
+interface SeoExtras {
+    /** Parsed JSON-LD objects (Organization, Person, BreadcrumbList, the editor's own schema). Render each in `<script type="application/ld+json">`. */
+    json_ld?: Record<string, unknown>[];
+    /** The page in its other languages; `alternates` also lists the page itself and `x-default`. `uri` is a path on the frontend. */
+    hreflang?: {
+        current: string | null;
+        alternates: Hreflang[];
+    };
+}
+interface Hreflang {
+    hreflang: string;
+    uri: string;
+}
+/** `addons.seo` of GET /site: what robots.txt needs. */
+interface SeoSite {
+    robots: {
+        sitemap?: boolean;
+        humans?: string;
+        indexing: 'index' | 'noindex';
+    };
+}
 interface ContentPage extends Tagged {
     site: string;
     uri: string;
@@ -46,6 +70,10 @@ interface PathItem {
     uri: string;
     updated_at: string;
     priority: number;
+    /** SEO addon: `always`..`never`; present when the addon is on. */
+    change_frequency?: string;
+    /** SEO addon: only on pages that exist in more than one language. */
+    alternates?: Hreflang[];
 }
 interface PathsResponse extends Tagged {
     data: PathItem[];
@@ -63,6 +91,7 @@ interface SiteResponse extends Tagged {
         turnstile?: TurnstileSite;
         kaptcha?: KaptchaSite;
         maintenance?: MaintenanceSite;
+        seo?: SeoSite;
     };
     /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
     gates?: {
@@ -241,4 +270,4 @@ interface BardValue {
 }
 declare function isBardValue(value: unknown): value is BardValue;
 
-export { type AddonBlocks, type BardMark, type BardNode, type BardSetNode, type BardValue, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type KaptchaSite, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type PageResponse, type PathItem, type PathsResponse, type RedirectPage, type SelectValue, type Seo, type SiteResponse, type Tagged, type TaxonomyPage, type TermPage, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
+export { type AddonBlocks, type BardMark, type BardNode, type BardSetNode, type BardValue, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type KaptchaSite, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type PageResponse, type PathItem, type PathsResponse, type RedirectPage, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SiteResponse, type Tagged, type TaxonomyPage, type TermPage, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
