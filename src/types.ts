@@ -18,7 +18,7 @@ export interface Seo {
  * `addons.<handle>`: the block each enabled contributor adds to a page (omitted when empty). The shape is the addon's own,
  * so it is `unknown` here; an addon's components narrow it.
  */
-export type AddonBlocks = Record<string, unknown> & { seo?: SeoExtras }
+export type AddonBlocks = Record<string, unknown> & { seo?: SeoExtras; diskussiya?: DiskussiyaBlock }
 
 /** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
 export interface SeoExtras {

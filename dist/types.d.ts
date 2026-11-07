@@ -16,6 +16,7 @@ interface Seo {
  */
 type AddonBlocks = Record<string, unknown> & {
     seo?: SeoExtras;
+    diskussiya?: DiskussiyaBlock;
 };
 /** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
 interface SeoExtras {
