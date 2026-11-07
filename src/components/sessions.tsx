@@ -16,6 +16,8 @@ export interface SessionsLabels {
   rule: string
   save: string
   password: string
+  code: string
+  confirm: string
   signedOut: string
 }
 
@@ -31,12 +33,16 @@ export const DEFAULT_SESSIONS_LABELS: SessionsLabels = {
   rule: 'When I sign in on another device',
   save: 'Save',
   password: 'Your password',
+  code: 'Authentication code or recovery code',
+  confirm: 'Confirm',
   signedOut: 'You are signed out.',
 }
 
 export interface SessionsProps {
   /** `addons.sessions.account`. Default `/!/sessions/account`. */
   account?: string
+  /** Password confirmation. Default `/!/account/confirm-password`. */
+  confirmPassword?: string
   /** Stream URL used to learn of waiting sign-ins at once. Default `/!/notifications/inbox/stream`; pass `false` to poll only. */
   stream?: string | false
   /** Poll every this many ms when no stream. Default 15000. */
@@ -52,7 +58,7 @@ export interface SessionsProps {
  * sign-ins, and the person's own rule when the roles allow it (read-only with the reason otherwise). Per-user, never cached;
  * a 401 means signed out. Class hooks: `orman-sessions`, `__pending|__active|__history|__row|__button|__rule|__locked|__error`.
  */
-export function Sessions({ account = '/!/sessions/account', stream = '/!/notifications/inbox/stream', pollMs = 15000, labels, api: apiOptions, onSignedOut, className }: SessionsProps) {
+export function Sessions({ account = '/!/sessions/account', confirmPassword = '/!/account/confirm-password', stream = '/!/notifications/inbox/stream', pollMs = 15000, labels, api: apiOptions, onSignedOut, className }: SessionsProps) {
   const text = { ...DEFAULT_SESSIONS_LABELS, ...labels }
   const [data, setData] = useState<SessionsAccount | null>(null)
   const [out, setOut] = useState(false)
@@ -86,11 +92,33 @@ export function Sessions({ account = '/!/sessions/account', stream = '/!/notific
     })
   }, [load, stream, pollMs, apiOptions])
 
-  async function post(url: string, body?: Record<string, unknown>) {
+  // A sensitive action (approve, deny, sign out) may want the password again (403), then the second factor (422 `two_factor`).
+  const [ask, setAsk] = useState<null | { kind: 'password' | 'code'; url: string; body: Record<string, unknown> }>(null)
+
+  async function post(url: string, body: Record<string, unknown> = {}) {
     setMessage(null)
     const res = await call('POST', url, body)
-    if (!res.ok && res.status !== 401) setMessage(failure(res))
+    if (!res.ok && res.status === 403) setAsk({ kind: 'password', url, body })
+    else if (!res.ok && res.status === 422 && (res.body as { two_factor?: boolean } | null)?.two_factor) {
+      setAsk({ kind: 'code', url, body })
+      if (body.code || body.recovery_code) setMessage(failure(res))
+    } else {
+      setAsk(null)
+      if (!res.ok && res.status !== 401) setMessage(failure(res))
+    }
     await load()
+  }
+
+  async function answer(form: HTMLFormElement) {
+    if (!ask) return
+    const value = String(new FormData(form).get('value') ?? '').trim()
+    if (ask.kind === 'password') {
+      const res = await call('POST', confirmPassword, { password: value })
+      if (!res.ok) return setMessage(failure(res))
+      return post(ask.url, ask.body)
+    }
+    // A recovery code has a dash; an authenticator code is digits.
+    return post(ask.url, { ...ask.body, ...(/^\d{6}$/.test(value) ? { code: value } : { recovery_code: value }) })
   }
 
   const root = ['orman-sessions', className].filter(Boolean).join(' ')
@@ -173,6 +201,24 @@ export function Sessions({ account = '/!/sessions/account', stream = '/!/notific
         <h3>{text.history}</h3>
         <ul>{data.history.map(row)}</ul>
       </div>
+
+      {ask ? (
+        <form
+          className="orman-sessions__confirm"
+          onSubmit={event => {
+            event.preventDefault()
+            void answer(event.currentTarget)
+          }}
+        >
+          <label>
+            <span>{ask.kind === 'password' ? text.password : text.code}</span>
+            <input name="value" type={ask.kind === 'password' ? 'password' : 'text'} autoComplete={ask.kind === 'password' ? 'current-password' : 'one-time-code'} required autoFocus />
+          </label>
+          <button type="submit" className="orman-sessions__button">
+            {text.confirm}
+          </button>
+        </form>
+      ) : null}
 
       {message ? (
         <p className="orman-sessions__error" role="alert">
