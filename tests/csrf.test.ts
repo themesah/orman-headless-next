@@ -50,7 +50,7 @@ describe('api', () => {
 
   it('returns field errors from a 422 and never throws', async () => {
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => json(422, { errors: { email: ['Bad e-mail'], name: ['Required'] } })))
-    expect(await api('GET', '/x')).toEqual({ ok: false, status: 422, message: 'Bad e-mail', errors: { email: ['Bad e-mail'], name: ['Required'] } })
+    expect(await api('GET', '/x')).toEqual({ ok: false, status: 422, message: 'Bad e-mail', errors: { email: ['Bad e-mail'], name: ['Required'] }, body: { errors: { email: ['Bad e-mail'], name: ['Required'] } } })
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => {
       throw new TypeError('offline')
     }))

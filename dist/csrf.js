@@ -82,7 +82,7 @@ async function api(method, url, data, options = {}) {
     }
     if (res.ok) return { ok: true, status: res.status, body: parsed };
     const errors = fieldErrors(parsed);
-    return { ok: false, status: res.status, message: errorMessage(res.status, parsed, messages), ...errors ? { errors } : {} };
+    return { ok: false, status: res.status, message: errorMessage(res.status, parsed, messages), ...errors ? { errors } : {}, body: parsed };
   } catch {
     return { ok: false, status: 0, message: { ...DEFAULT_MESSAGES, ...messages }.network };
   }

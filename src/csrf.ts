@@ -31,6 +31,8 @@ export type ApiResult<T = unknown> =
       message: string
       /** Per-field validation messages when the answer was a 422 with `errors: { field: [..] }`. */
       errors?: Record<string, string[]>
+      /** The parsed error body, for answers that carry more than a message (e.g. `{ needs: 'password' }`). */
+      body?: unknown
     }
 
 export interface ApiOptions {
@@ -133,7 +135,7 @@ export async function api<T = unknown>(
     }
     if (res.ok) return { ok: true, status: res.status, body: parsed as T }
     const errors = fieldErrors(parsed)
-    return { ok: false, status: res.status, message: errorMessage(res.status, parsed, messages), ...(errors ? { errors } : {}) }
+    return { ok: false, status: res.status, message: errorMessage(res.status, parsed, messages), ...(errors ? { errors } : {}), body: parsed }
   } catch {
     return { ok: false, status: 0, message: { ...DEFAULT_MESSAGES, ...messages }.network }
   }

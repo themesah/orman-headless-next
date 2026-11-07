@@ -14,6 +14,13 @@ export default defineConfig({
     'form-fields': 'src/components/form-fields.tsx',
     'maintenance-page': 'src/components/maintenance-page.tsx',
     roadmap: 'src/components/roadmap.ts',
+    'account-api': 'src/components/account-api.ts',
+    stream: 'src/components/stream.ts',
+    login: 'src/components/login.tsx',
+    'two-factor': 'src/components/two-factor.tsx',
+    sessions: 'src/components/sessions.tsx',
+    comments: 'src/components/comments.tsx',
+    inbox: 'src/components/inbox.tsx',
   },
   format: ['esm'],
   dts: true,
@@ -28,7 +35,7 @@ export default defineConfig({
   },
   async onSuccess() {
     const { readFile, writeFile } = await import('node:fs/promises')
-    for (const file of ['dist/form.js', 'dist/captcha.js', 'dist/form-fields.js']) {
+    for (const file of ['form', 'captcha', 'form-fields', 'login', 'two-factor', 'sessions', 'comments', 'inbox'].map(n => `dist/${n}.js`)) {
       const source = await readFile(file, 'utf8')
       if (!source.startsWith('"use client"')) await writeFile(file, `"use client";\n${source}`)
     }

@@ -19,6 +19,8 @@ type ApiResult<T = unknown> = {
     message: string;
     /** Per-field validation messages when the answer was a 422 with `errors: { field: [..] }`. */
     errors?: Record<string, string[]>;
+    /** The parsed error body, for answers that carry more than a message (e.g. `{ needs: 'password' }`). */
+    body?: unknown;
 };
 interface ApiOptions {
     /** The text for each failure the kit words itself; defaults to English. */

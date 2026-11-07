@@ -1,6 +1,6 @@
 {
   "name": "@orman/headless-next",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Frontend kit for Orman Headless sites on Next.js: typed read client, proxy helpers, first components.",
   "license": "UNLICENSED",
   "type": "module",
@@ -17,6 +17,13 @@
     "./form-fields": { "types": "./dist/form-fields.d.ts", "import": "./dist/form-fields.js" },
     "./maintenance-page": { "types": "./dist/maintenance-page.d.ts", "import": "./dist/maintenance-page.js" },
     "./roadmap": { "types": "./dist/roadmap.d.ts", "import": "./dist/roadmap.js" },
+    "./account-api": { "types": "./dist/account-api.d.ts", "import": "./dist/account-api.js" },
+    "./stream": { "types": "./dist/stream.d.ts", "import": "./dist/stream.js" },
+    "./login": { "types": "./dist/login.d.ts", "import": "./dist/login.js" },
+    "./two-factor": { "types": "./dist/two-factor.d.ts", "import": "./dist/two-factor.js" },
+    "./sessions": { "types": "./dist/sessions.d.ts", "import": "./dist/sessions.js" },
+    "./comments": { "types": "./dist/comments.d.ts", "import": "./dist/comments.js" },
+    "./inbox": { "types": "./dist/inbox.d.ts", "import": "./dist/inbox.js" },
     "./package.json": "./package.json"
   },
   "scripts": {

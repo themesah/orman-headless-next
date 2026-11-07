@@ -34,6 +34,12 @@ git add -A && git commit -m "release vX.Y.Z" && git tag vX.Y.Z
 | `@orman/headless-next/captcha` | `<Captcha>`: Turnstile or Kaptcha, chosen from `/site` | client component |
 | `@orman/headless-next/form-fields` | `<FormFields>`: the form drawn from `client.form(handle)` | client component |
 | `@orman/headless-next/maintenance-page` | `<MaintenancePage site>` | server or client |
+| `@orman/headless-next/login` | `<Login>`: credentials → code / recovery code → waiting for approval → signed in | client component |
+| `@orman/headless-next/two-factor` | `<TwoFactor>`: status, turn on (QR), turn off, recovery codes (.txt built in the browser) | client component |
+| `@orman/headless-next/sessions` | `<Sessions>`: history, active sessions, sign out, approve / deny, own rule | client component |
+| `@orman/headless-next/comments` | `<Comments block site>` (approved comments + form), `<MyComments>` | client component |
+| `@orman/headless-next/inbox` | `<Inbox>`: seen / accept / snooze / dismiss, live over Mercure, polling fallback | client component |
+| `@orman/headless-next/stream` | `followStream()`: the person's own Mercure topic (bearer token, no URL token) | browser |
 | `@orman/headless-next/roadmap` | `COMPONENT_ROADMAP`: what is planned and in which wave | anywhere |
 
 ## Read client
@@ -133,4 +139,5 @@ If `/site` cannot be read the gate lets requests through and logs it. Pass `rend
 
 ## Not built yet
 
-`COMPONENT_ROADMAP` lists `<Comments>`, `<Inbox>`, `<Login>`, `<SessionGate>` (6.5), `<AddToCart>`/`<Cart>`, `<CodeCheck>` (6.7).
+`COMPONENT_ROADMAP` lists `<AddToCart>`/`<Cart>`, `<CodeCheck>` (6.7). There is no `<SessionGate>`: Orman enforces the Sessions rules itself, and a revoked session
+answers 401 on the next `/!/` call, which every per-user component treats as signed out.

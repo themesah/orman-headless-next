@@ -105,7 +105,7 @@ describe('<MaintenancePage>', () => {
 
 describe('roadmap', () => {
   it('names the wave of every component not built yet', () => {
-    expect(COMPONENT_ROADMAP.map(e => e.component)).toEqual(['<Comments>', '<Inbox>', '<Login>', '<SessionGate>', '<AddToCart> / <Cart>', '<CodeCheck>'])
+    expect(COMPONENT_ROADMAP.map(e => e.component)).toEqual(['<AddToCart> / <Cart>', '<CodeCheck>'])
     for (const entry of COMPONENT_ROADMAP) expect(entry.wave).toMatch(/^6\.\d Wave \d$/)
   })
 })

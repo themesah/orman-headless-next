@@ -96,6 +96,10 @@ interface SiteResponse extends Tagged {
         kaptcha?: KaptchaSite;
         maintenance?: MaintenanceSite;
         seo?: SeoSite;
+        account?: AccountSite;
+        sessions?: SessionsSite;
+        diskussiya?: DiskussiyaSite;
+        notifications?: NotificationsSite;
     };
     /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
     gates?: {
@@ -273,5 +277,153 @@ interface BardValue {
     content: BardNode[];
 }
 declare function isBardValue(value: unknown): value is BardValue;
+/** `addons.account` of GET /site: whether the site has a second sign-in step, and where the steps live. */
+interface AccountSite {
+    two_step: boolean;
+    login: string;
+    challenge: string;
+    me: string;
+    logout: string;
+}
+/** `addons.sessions` of GET /site: present only while the Sessions addon is on. Orman enforces its rules itself (401 on a revoked session). */
+interface SessionsSite {
+    enabled: true;
+    approval_window_seconds: number;
+    rules: string[];
+    account: string;
+    awaiting: string;
+}
+interface DiskussiyaSite {
+    enabled: true;
+    mine: string;
+    post: string;
+}
+interface NotificationsSite {
+    front_inbox: true;
+    /** True when the site has a Mercure hub the browser can reach; otherwise the inbox polls. */
+    realtime: boolean;
+    inbox: string;
+}
+/** What the JSON login (and the second step) answers besides "signed in". */
+type LoginStep = {
+    needs: 'two_factor';
+    two_factor?: true;
+} | {
+    needs: 'approval';
+    request: {
+        id: number;
+        expires_at: string;
+    };
+} | {
+    needs: null;
+    signed_in: true;
+};
+/** `addons.diskussiya` of a page: the approved comments (public, cached with the entry) and what a form needs. */
+interface DiskussiyaBlock {
+    thread: string;
+    context: string;
+    signature: string;
+    open: boolean;
+    login_required: boolean;
+    captcha: FormCaptcha | null;
+    honeypot: string;
+    post: string;
+    count: number;
+    comments: PublicComment[];
+}
+/** An approved comment. Text only, never an e-mail, an address or a moderation field. */
+interface PublicComment {
+    id: number;
+    parent_id: number | null;
+    depth: number;
+    author: {
+        name: string;
+    };
+    text: string;
+    created_at: string | null;
+}
+type CommentStatus = 'pending' | 'accepted' | 'rejected' | 'replied';
+/** A comment as its own author sees it (`/!/diskussiya/mine` and the answer to a post). */
+interface OwnComment extends PublicComment {
+    status: CommentStatus;
+    page?: {
+        title: string;
+        url: string | null;
+        uri: string | null;
+    } | null;
+}
+interface SessionRow {
+    id: number;
+    is_current: boolean;
+    area_label: string;
+    device_label: string;
+    ip_address: string | null;
+    login_at_human: string | null;
+    last_active_at_human: string | null;
+    ended_at_human: string | null;
+    ended_reason_label: string | null;
+    active: boolean;
+    actions: {
+        approve: string;
+        deny: string;
+        revoke: string;
+    };
+}
+interface PendingSignIn {
+    id: number;
+    device_label: string;
+    ip_address: string | null;
+    requested_at_human: string | null;
+    seconds_left: number;
+    actions: {
+        approve: string;
+        deny: string;
+        revoke: string;
+    };
+}
+interface SessionPolicyInfo {
+    rule: string;
+    label: string;
+    description: string;
+    source: string;
+    editable: boolean;
+    locked_reason: string | null;
+}
+interface SessionsAccount {
+    policy: SessionPolicyInfo;
+    rules: {
+        rule: string;
+        label: string;
+        description: string;
+    }[];
+    pending: PendingSignIn[];
+    active: SessionRow[];
+    history: SessionRow[];
+    needs_code: boolean;
+    elevated: boolean;
+}
+interface InboxItem {
+    id: string;
+    title: string;
+    body: string | null;
+    level: string;
+    action_url: string | null;
+    action_label: string | null;
+    created_at: string;
+    read: boolean;
+    status: string;
+    requires_acceptance: boolean;
+    accepted: boolean;
+    can_accept: boolean;
+    can_snooze: boolean;
+    can_dismiss: boolean;
+}
+/** A subscriber token for the person's own Mercure topic (15 minutes). The hub is opened directly, not through the proxy. */
+interface StreamInfo {
+    hub: string;
+    topic: string;
+    token: string;
+    expires_at: string;
+}
 
-export { type AddonBlocks, type BardMark, type BardNode, type BardSetNode, type BardValue, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type KaptchaSite, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type PageResponse, type PathItem, type PathsResponse, type RedirectPage, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SiteResponse, type Tagged, type TaxonomyPage, type TermPage, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
+export { type AccountSite, type AddonBlocks, type BardMark, type BardNode, type BardSetNode, type BardValue, type CommentStatus, type DiskussiyaBlock, type DiskussiyaSite, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type InboxItem, type KaptchaSite, type LoginStep, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type NotificationsSite, type OwnComment, type PageResponse, type PathItem, type PathsResponse, type PendingSignIn, type PublicComment, type RedirectPage, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SessionPolicyInfo, type SessionRow, type SessionsAccount, type SessionsSite, type SiteResponse, type StreamInfo, type Tagged, type TaxonomyPage, type TermPage, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
