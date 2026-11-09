@@ -17,6 +17,7 @@ interface Seo {
 type AddonBlocks = Record<string, unknown> & {
     seo?: SeoExtras;
     diskussiya?: DiskussiyaBlock;
+    per_page_theme?: PerPageThemeBlock;
 };
 /** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
 interface SeoExtras {
@@ -101,6 +102,9 @@ interface SiteResponse extends Tagged {
         sessions?: SessionsSite;
         diskussiya?: DiskussiyaSite;
         notifications?: NotificationsSite;
+        redirect?: RedirectSite;
+        analitika?: AnalitikaSite;
+        tracking_code?: TrackingCodeSite;
     };
     /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
     gates?: {
@@ -426,5 +430,36 @@ interface StreamInfo {
     token: string;
     expires_at: string;
 }
+/** `addons.per_page_theme` of a page: the editor's choice of a page theme (the handle of an installed theme), only on a page that has one. */
+interface PerPageThemeBlock {
+    /** Handle of the page theme (e.g. `inbio`). Map it to a React layout; an unknown handle falls back to the default one. */
+    theme: string;
+    /** The page asked to be left out of the navigation and of listings. `/navs`, `/trees` and the collection entries already leave it out; the flags are for a frontend that builds its own lists. */
+    hide_nav: boolean;
+    hide_listings: boolean;
+}
+/** `addons.redirect` of GET /site: where the not-found page reports a 404 for the addon's error list. Present while the Redirect addon is on. */
+interface RedirectSite {
+    not_found: string;
+    log_errors: boolean;
+}
+/** `addons.analitika` of GET /site: present while page views are counted. Nothing about the data leaves Orman. */
+interface AnalitikaSite {
+    track_pageviews: true;
+    /** The pixel to request once per page view (`GET`, same origin through the proxy, never cached). */
+    hit: string;
+    ignore_bots: boolean;
+}
+/** `addons.tracking_code` of GET /site: a product code check (not analytics). The form's fields come from `client.form(form)`. */
+interface TrackingCodeSite {
+    form: string;
+    field: string;
+    /** `POST` here (CSRF + `Accept: application/json`): `200 {success, message}` or `422 {message, errors}`. */
+    redeem: string;
+    require_login: boolean;
+    min_length: number;
+    max_length: number;
+    check_url?: string;
+}
 
-export { type AccountSite, type AddonBlocks, type BardMark, type BardNode, type BardSetNode, type BardValue, type CommentStatus, type DiskussiyaBlock, type DiskussiyaSite, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type InboxItem, type KaptchaSite, type LoginStep, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type NotificationsSite, type OwnComment, type PageResponse, type PathItem, type PathsResponse, type PendingSignIn, type PublicComment, type RedirectPage, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SessionPolicyInfo, type SessionRow, type SessionsAccount, type SessionsSite, type SiteResponse, type StreamInfo, type Tagged, type TaxonomyPage, type TermPage, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
+export { type AccountSite, type AddonBlocks, type AnalitikaSite, type BardMark, type BardNode, type BardSetNode, type BardValue, type CommentStatus, type DiskussiyaBlock, type DiskussiyaSite, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type InboxItem, type KaptchaSite, type LoginStep, type MaintenanceGate, type MaintenanceSite, type NavItem, type NavResponse, type NotFound, type NotificationsSite, type OwnComment, type PageResponse, type PathItem, type PathsResponse, type PendingSignIn, type PerPageThemeBlock, type PublicComment, type RedirectPage, type RedirectSite, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SessionPolicyInfo, type SessionRow, type SessionsAccount, type SessionsSite, type SiteResponse, type StreamInfo, type Tagged, type TaxonomyPage, type TermPage, type TrackingCodeSite, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };

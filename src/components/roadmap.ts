@@ -11,5 +11,4 @@ export interface RoadmapEntry {
  */
 export const COMPONENT_ROADMAP: readonly RoadmapEntry[] = [
   { component: '<AddToCart> / <Cart>', wave: '6.7 Wave 4', needs: 'Cargo actions' },
-  { component: '<CodeCheck>', wave: '6.7 Wave 4', needs: 'Courses / Scoring actions' },
 ]

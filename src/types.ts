@@ -18,7 +18,7 @@ export interface Seo {
  * `addons.<handle>`: the block each enabled contributor adds to a page (omitted when empty). The shape is the addon's own,
  * so it is `unknown` here; an addon's components narrow it.
  */
-export type AddonBlocks = Record<string, unknown> & { seo?: SeoExtras; diskussiya?: DiskussiyaBlock }
+export type AddonBlocks = Record<string, unknown> & { seo?: SeoExtras; diskussiya?: DiskussiyaBlock; per_page_theme?: PerPageThemeBlock }
 
 /** `addons.seo` of a page: what the top-level `seo` block does not carry. Each key is present only when the page has it. */
 export interface SeoExtras {
@@ -101,6 +101,9 @@ export interface SiteResponse extends Tagged {
     sessions?: SessionsSite
     diskussiya?: DiskussiyaSite
     notifications?: NotificationsSite
+    redirect?: RedirectSite
+    analitika?: AnalitikaSite
+    tracking_code?: TrackingCodeSite
   }
   /** `gates.<handle>`: the decision of an addon's request gate, the same for every visitor (Maintenance today). */
   gates?: { maintenance?: MaintenanceGate } & Record<string, unknown>
@@ -416,4 +419,39 @@ export interface StreamInfo {
   topic: string
   token: string
   expires_at: string
+}
+
+/** `addons.per_page_theme` of a page: the editor's choice of a page theme (the handle of an installed theme), only on a page that has one. */
+export interface PerPageThemeBlock {
+  /** Handle of the page theme (e.g. `inbio`). Map it to a React layout; an unknown handle falls back to the default one. */
+  theme: string
+  /** The page asked to be left out of the navigation and of listings. `/navs`, `/trees` and the collection entries already leave it out; the flags are for a frontend that builds its own lists. */
+  hide_nav: boolean
+  hide_listings: boolean
+}
+
+/** `addons.redirect` of GET /site: where the not-found page reports a 404 for the addon's error list. Present while the Redirect addon is on. */
+export interface RedirectSite {
+  not_found: string
+  log_errors: boolean
+}
+
+/** `addons.analitika` of GET /site: present while page views are counted. Nothing about the data leaves Orman. */
+export interface AnalitikaSite {
+  track_pageviews: true
+  /** The pixel to request once per page view (`GET`, same origin through the proxy, never cached). */
+  hit: string
+  ignore_bots: boolean
+}
+
+/** `addons.tracking_code` of GET /site: a product code check (not analytics). The form's fields come from `client.form(form)`. */
+export interface TrackingCodeSite {
+  form: string
+  field: string
+  /** `POST` here (CSRF + `Accept: application/json`): `200 {success, message}` or `422 {message, errors}`. */
+  redeem: string
+  require_login: boolean
+  min_length: number
+  max_length: number
+  check_url?: string
 }

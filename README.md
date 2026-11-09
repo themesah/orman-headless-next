@@ -40,6 +40,9 @@ git add -A && git commit -m "release vX.Y.Z" && git tag vX.Y.Z
 | `@orman/headless-next/comments` | `<Comments block site>` (approved comments + form), `<MyComments>` | client component |
 | `@orman/headless-next/inbox` | `<Inbox>`: seen / accept / snooze / dismiss, live over Mercure, polling fallback | client component |
 | `@orman/headless-next/stream` | `followStream()`: the person's own Mercure topic (bearer token, no URL token) | browser |
+| `@orman/headless-next/analytics` | `<PageView site entryId>`: counts a page view in Analitika (the addon's pixel, once per path, no cookie, honours DNT/GPC) | client component |
+| `@orman/headless-next/not-found` | `<NotFoundBeacon site>`: reports the frontend's 404 to the Redirect addon's error list | client component |
+| `@orman/headless-next/code-check` | `<CodeCheck tracking schema site>`: Tracking-Code's "check your product" form | client component |
 | `@orman/headless-next/roadmap` | `COMPONENT_ROADMAP`: what is planned and in which wave | anywhere |
 
 ## Read client
@@ -137,7 +140,30 @@ While `gates.maintenance.active` is true every page answers with the status the 
 paths and `options.allow`. A visitor with the bypass cookie, or a link carrying the key, is asked at `/!/maintenance/check` (Orman keeps the secrets) and passes.
 If `/site` cannot be read the gate lets requests through and logs it. Pass `render` to answer with your own page.
 
+## Wave 3 addons (6.6)
+
+```tsx
+// app/not-found.tsx: a 404 reaches the Redirect addon's "errors" list. In the browser, because a cached not-found page would count one visitor.
+<NotFoundBeacon site={await orman.site()} />
+
+// the page template: one Analitika page view per path (no-op while the addon is off)
+<PageView site={site.addons.analitika} entryId={page.data.id as string} />
+
+// the check page of a shop with Tracking-Code (`addons.tracking_code` in /site; the fields come from the form's own blueprint)
+<CodeCheck tracking={site.addons.tracking_code!} schema={form.data} site={site} />
+
+// Per-Page-Theme: the editor's choice, only on a page that has one
+const theme = page.addons?.per_page_theme?.theme   // 'inbio' → your React layout, anything else → the default
+```
+
+- **404 log.** The visitor's address reaches the list only through `forwardToOrman` (edge secret + `X-Orman-Client-IP`); without a configured secret it is the proxy's own address.
+  Orman checks that the reported path really is missing, so a made-up path cannot fill the list; 30 reports a minute per visitor.
+- **Analitika.** `GET /!/analitika/hit?e=&p=&r=` is the same pixel as on Blade pages, so the bot filter works on the user agent. `respectDnt` (default on) skips visitors with
+  Do Not Track / Global Privacy Control; the addon itself stores no cookie and no address. Channel pages (`/{page}/{channel}`) and click links (`/!/analitika/go/{id}`) are not on the frontend yet.
+- **Tracking-Code** is a product-code check, not a snippet injector: there is nothing to put in a page's head.
+- **Per-Page-Theme.** `/navs`, `/trees/collections/*` and `/collections/*/entries` already leave out the pages that opted out; the block's `hide_nav` / `hide_listings` are for a frontend that builds its own lists.
+
 ## Not built yet
 
-`COMPONENT_ROADMAP` lists `<AddToCart>`/`<Cart>`, `<CodeCheck>` (6.7). There is no `<SessionGate>`: Orman enforces the Sessions rules itself, and a revoked session
+`COMPONENT_ROADMAP` lists `<AddToCart>`/`<Cart>` (6.7). There is no `<SessionGate>`: Orman enforces the Sessions rules itself, and a revoked session
 answers 401 on the next `/!/` call, which every per-user component treats as signed out.

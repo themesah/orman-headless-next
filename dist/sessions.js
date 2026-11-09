@@ -205,9 +205,11 @@ var DEFAULT_SESSIONS_LABELS = {
   rule: "When I sign in on another device",
   save: "Save",
   password: "Your password",
+  code: "Authentication code or recovery code",
+  confirm: "Confirm",
   signedOut: "You are signed out."
 };
-function Sessions({ account = "/!/sessions/account", stream = "/!/notifications/inbox/stream", pollMs = 15e3, labels, api: apiOptions, onSignedOut, className }) {
+function Sessions({ account = "/!/sessions/account", confirmPassword = "/!/account/confirm-password", stream = "/!/notifications/inbox/stream", pollMs = 15e3, labels, api: apiOptions, onSignedOut, className }) {
   const text = { ...DEFAULT_SESSIONS_LABELS, ...labels };
   const [data, setData] = useState(null);
   const [out, setOut] = useState(false);
@@ -237,11 +239,29 @@ function Sessions({ account = "/!/sessions/account", stream = "/!/notifications/
       onSignedOut: () => setOut(true)
     });
   }, [load, stream, pollMs, apiOptions]);
-  async function post(url, body) {
+  const [ask, setAsk] = useState(null);
+  async function post(url, body = {}) {
     setMessage(null);
     const res = await call("POST", url, body);
-    if (!res.ok && res.status !== 401) setMessage(failure(res));
+    if (!res.ok && res.status === 403) setAsk({ kind: "password", url, body });
+    else if (!res.ok && res.status === 422 && res.body?.two_factor) {
+      setAsk({ kind: "code", url, body });
+      if (body.code || body.recovery_code) setMessage(failure(res));
+    } else {
+      setAsk(null);
+      if (!res.ok && res.status !== 401) setMessage(failure(res));
+    }
     await load();
+  }
+  async function answer(form) {
+    if (!ask) return;
+    const value = String(new FormData(form).get("value") ?? "").trim();
+    if (ask.kind === "password") {
+      const res = await call("POST", confirmPassword, { password: value });
+      if (!res.ok) return setMessage(failure(res));
+      return post(ask.url, ask.body);
+    }
+    return post(ask.url, { ...ask.body, .../^\d{6}$/.test(value) ? { code: value } : { recovery_code: value } });
   }
   const root = ["orman-sessions", className].filter(Boolean).join(" ");
   if (out) return /* @__PURE__ */ jsx("p", { className: root, children: text.signedOut });
@@ -301,6 +321,23 @@ function Sessions({ account = "/!/sessions/account", stream = "/!/notifications/
       /* @__PURE__ */ jsx("h3", { children: text.history }),
       /* @__PURE__ */ jsx("ul", { children: data.history.map(row) })
     ] }),
+    ask ? /* @__PURE__ */ jsxs(
+      "form",
+      {
+        className: "orman-sessions__confirm",
+        onSubmit: (event) => {
+          event.preventDefault();
+          void answer(event.currentTarget);
+        },
+        children: [
+          /* @__PURE__ */ jsxs("label", { children: [
+            /* @__PURE__ */ jsx("span", { children: ask.kind === "password" ? text.password : text.code }),
+            /* @__PURE__ */ jsx("input", { name: "value", type: ask.kind === "password" ? "password" : "text", autoComplete: ask.kind === "password" ? "current-password" : "one-time-code", required: true, autoFocus: true })
+          ] }),
+          /* @__PURE__ */ jsx("button", { type: "submit", className: "orman-sessions__button", children: text.confirm })
+        ]
+      }
+    ) : null,
     message ? /* @__PURE__ */ jsx("p", { className: "orman-sessions__error", role: "alert", children: message }) : null
   ] });
 }
