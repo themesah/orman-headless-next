@@ -274,6 +274,12 @@ export interface BardSetNode extends BardNode {
   values: Record<string, unknown>
 }
 
+/** A Texstyle pin: `values.type` is the pin type, the rest are the fields the pin declares (augmented). Orman never sends the pin's Blade view. */
+export interface BardPinNode extends BardNode {
+  type: 'btsPin'
+  attrs: { id: string | number | null; values: { type: string } & Record<string, unknown> }
+}
+
 export interface BardValue {
   type: 'bard'
   content: BardNode[]

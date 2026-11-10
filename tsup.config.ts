@@ -27,6 +27,7 @@ export default defineConfig({
     shop: 'src/components/shop.tsx',
     courses: 'src/components/courses.tsx',
     scoring: 'src/components/scoring.tsx',
+    bard: 'src/components/bard.tsx',
   },
   format: ['esm'],
   dts: true,

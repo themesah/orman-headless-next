@@ -45,6 +45,7 @@ git add -A && git commit -m "release vX.Y.Z" && git tag vX.Y.Z
 | `@orman/headless-next/code-check` | `<CodeCheck tracking schema site>`: Tracking-Code's "check your product" form | client component |
 | `@orman/headless-next/shop` | `<AddToCart>`, `<Cart>`, `<Checkout>`, `<OrderConfirmation>`, `formatMoney()`: Cargo's cart → checkout → confirmation | client component |
 | `@orman/headless-next/courses` | `<LockedLesson>` (the body is fetched per person), `<CompleteLesson>`, `<CourseProgress>` | client component |
+| `@orman/headless-next/bard` | `<Bard value>` / `renderBard()`: Bard JSON as React (marks, tables, Texstyle classes and pins, Editor-Color, Font-Size, sets by handle); no raw HTML | **server** component |
 | `@orman/headless-next/scoring` | `<MyScore>`, `<MyTasks>`: the signed-in person's points, badges and tasks | client component |
 | `@orman/headless-next/roadmap` | `COMPONENT_ROADMAP`: what is planned and in which wave | anywhere |
 
@@ -169,6 +170,7 @@ const theme = page.addons?.per_page_theme?.theme   // 'inbio' → your React lay
   gateway that leaves for the bank returns through `/!/cargo/payments/{gateway}/checkout`, and Orman ends on the page named by `headless.cargo.confirmation_path`, where `<OrderConfirmation query={searchParams}>` shows the order behind its signed link.
 - **Courses.** A lesson page is a stub in the cache (`addons.courses` says it is gated); `<LockedLesson>` asks `/!/courses/lessons/{id}` per person and renders `children(data)` only for an enrolled student (401 signed out, 403 not enrolled).
 - **Scoring.** Everything is about the signed-in person; `<MyScore>` and `<MyTasks>` call the `/!/scoring/*` actions. A guest sees a sign-in text, never another person's data.
+- **Bard (json mode).** `<Bard value={page.data.body} />` is a server component with no `"use client"` and no raw HTML. Texstyle: `attrs.class` becomes `className` on blocks and `btsSpan` spans (class-name characters only), `btsDiv` a `<div>`, a `btsPin` renders the component you give for its `values.type` in `pins` (none: nothing; Orman never sends a pin's Blade view), `btsHidden` text never arrives. Editor-Color and Font-Size write `style` only for a real color or size (checked on Orman and again here). Bard sets render through `sets={{ handle: (values) => … }}`. Replace one type with `nodes` / `marks` (`next/image`, a router `<Link>`). PHP render hooks (Editor-Mutator, e.g. wrapping tables) do not run in json mode: do that here.
 - **Per-Page-Theme.** `/navs`, `/trees/collections/*` and `/collections/*/entries` already leave out the pages that opted out; the block's `hide_nav` / `hide_listings` are for a frontend that builds its own lists.
 
 ## Not built yet

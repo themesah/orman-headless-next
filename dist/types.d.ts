@@ -277,6 +277,16 @@ interface BardSetNode extends BardNode {
     set: string;
     values: Record<string, unknown>;
 }
+/** A Texstyle pin: `values.type` is the pin type, the rest are the fields the pin declares (augmented). Orman never sends the pin's Blade view. */
+interface BardPinNode extends BardNode {
+    type: 'btsPin';
+    attrs: {
+        id: string | number | null;
+        values: {
+            type: string;
+        } & Record<string, unknown>;
+    };
+}
 interface BardValue {
     type: 'bard';
     content: BardNode[];
@@ -644,4 +654,4 @@ interface MyTasksData {
     pendingSubmissionTaskIds: (string | number)[];
 }
 
-export { type AccountSite, type AddonBlocks, type AnalitikaSite, type BardMark, type BardNode, type BardSetNode, type BardValue, type CargoOrder, type CargoProductBlock, type CargoSite, type CartData, type CartLine, type CommentStatus, type CoursePageBlock, type CoursesSite, type DiskussiyaBlock, type DiskussiyaSite, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type InboxItem, type KaptchaSite, type LessonCompleted, type LessonPageBlock, type LoginStep, type MaintenanceGate, type MaintenanceSite, type MyCourses, type MyScoreData, type MyTasksData, type NavItem, type NavResponse, type NotFound, type NotificationsSite, type OwnComment, type PageResponse, type PathItem, type PathsResponse, type PendingSignIn, type PerPageThemeBlock, type PublicComment, type RedirectPage, type RedirectSite, type ScoringSite, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SessionPolicyInfo, type SessionRow, type SessionsAccount, type SessionsSite, type SiteResponse, type StreamInfo, type Tagged, type TaxonomyPage, type TermPage, type TrackingCodeSite, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
+export { type AccountSite, type AddonBlocks, type AnalitikaSite, type BardMark, type BardNode, type BardPinNode, type BardSetNode, type BardValue, type CargoOrder, type CargoProductBlock, type CargoSite, type CartData, type CartLine, type CommentStatus, type CoursePageBlock, type CoursesSite, type DiskussiyaBlock, type DiskussiyaSite, type EntriesResponse, type EntryPage, type FormCaptcha, type FormFieldSchema, type FormResponse, type FormSchema, type GlobalsResponse, type Hreflang, type InboxItem, type KaptchaSite, type LessonCompleted, type LessonPageBlock, type LoginStep, type MaintenanceGate, type MaintenanceSite, type MyCourses, type MyScoreData, type MyTasksData, type NavItem, type NavResponse, type NotFound, type NotificationsSite, type OwnComment, type PageResponse, type PathItem, type PathsResponse, type PendingSignIn, type PerPageThemeBlock, type PublicComment, type RedirectPage, type RedirectSite, type ScoringSite, type SelectValue, type Seo, type SeoExtras, type SeoSite, type SessionPolicyInfo, type SessionRow, type SessionsAccount, type SessionsSite, type SiteResponse, type StreamInfo, type Tagged, type TaxonomyPage, type TermPage, type TrackingCodeSite, type TreeNode, type TreeResponse, type TurnstileSite, isBardValue };
