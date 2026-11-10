@@ -43,6 +43,9 @@ git add -A && git commit -m "release vX.Y.Z" && git tag vX.Y.Z
 | `@orman/headless-next/analytics` | `<PageView site entryId>`: counts a page view in Analitika (the addon's pixel, once per path, no cookie, honours DNT/GPC) | client component |
 | `@orman/headless-next/not-found` | `<NotFoundBeacon site>`: reports the frontend's 404 to the Redirect addon's error list | client component |
 | `@orman/headless-next/code-check` | `<CodeCheck tracking schema site>`: Tracking-Code's "check your product" form | client component |
+| `@orman/headless-next/shop` | `<AddToCart>`, `<Cart>`, `<Checkout>`, `<OrderConfirmation>`, `formatMoney()`: Cargo's cart → checkout → confirmation | client component |
+| `@orman/headless-next/courses` | `<LockedLesson>` (the body is fetched per person), `<CompleteLesson>`, `<CourseProgress>` | client component |
+| `@orman/headless-next/scoring` | `<MyScore>`, `<MyTasks>`: the signed-in person's points, badges and tasks | client component |
 | `@orman/headless-next/roadmap` | `COMPONENT_ROADMAP`: what is planned and in which wave | anywhere |
 
 ## Read client
@@ -161,9 +164,14 @@ const theme = page.addons?.per_page_theme?.theme   // 'inbio' → your React lay
 - **Analitika.** `GET /!/analitika/hit?e=&p=&r=` is the same pixel as on Blade pages, so the bot filter works on the user agent. `respectDnt` (default on) skips visitors with
   Do Not Track / Global Privacy Control; the addon itself stores no cookie and no address. Channel pages (`/{page}/{channel}`) and click links (`/!/analitika/go/{id}`) are not on the frontend yet.
 - **Tracking-Code** is a product-code check, not a snippet injector: there is nothing to put in a page's head.
+- **Cargo.** `/page` carries `addons.cargo` (`price`, `currency`, `in_stock`, `variants`; minor units, never cost or stock counts); `/site` the addresses and the gateways' titles. The cart is a cookie
+  on the person's browser, so every call is `no-store` and goes through the proxy (`/!/cargo/*`). `<Checkout>` posts `{payment_gateway}` and gets `{order_id, confirmation_url}` (or `422 {errors}`); a
+  gateway that leaves for the bank returns through `/!/cargo/payments/{gateway}/checkout`, and Orman ends on the page named by `headless.cargo.confirmation_path`, where `<OrderConfirmation query={searchParams}>` shows the order behind its signed link.
+- **Courses.** A lesson page is a stub in the cache (`addons.courses` says it is gated); `<LockedLesson>` asks `/!/courses/lessons/{id}` per person and renders `children(data)` only for an enrolled student (401 signed out, 403 not enrolled).
+- **Scoring.** Everything is about the signed-in person; `<MyScore>` and `<MyTasks>` call the `/!/scoring/*` actions. A guest sees a sign-in text, never another person's data.
 - **Per-Page-Theme.** `/navs`, `/trees/collections/*` and `/collections/*/entries` already leave out the pages that opted out; the block's `hide_nav` / `hide_listings` are for a frontend that builds its own lists.
 
 ## Not built yet
 
-`COMPONENT_ROADMAP` lists `<AddToCart>`/`<Cart>` (6.7). There is no `<SessionGate>`: Orman enforces the Sessions rules itself, and a revoked session
+`COMPONENT_ROADMAP` is empty since 0.5.0 (Wave 4 built the last entries). There is no `<SessionGate>`: Orman enforces the Sessions rules itself, and a revoked session
 answers 401 on the next `/!/` call, which every per-user component treats as signed out.

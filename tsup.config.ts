@@ -24,6 +24,9 @@ export default defineConfig({
     analytics: 'src/components/analytics.tsx',
     'not-found': 'src/components/not-found.tsx',
     'code-check': 'src/components/code-check.tsx',
+    shop: 'src/components/shop.tsx',
+    courses: 'src/components/courses.tsx',
+    scoring: 'src/components/scoring.tsx',
   },
   format: ['esm'],
   dts: true,
@@ -38,7 +41,7 @@ export default defineConfig({
   },
   async onSuccess() {
     const { readFile, writeFile } = await import('node:fs/promises')
-    for (const file of ['form', 'captcha', 'form-fields', 'login', 'two-factor', 'sessions', 'comments', 'inbox', 'analytics', 'not-found', 'code-check'].map(n => `dist/${n}.js`)) {
+    for (const file of ['form', 'captcha', 'form-fields', 'login', 'two-factor', 'sessions', 'comments', 'inbox', 'analytics', 'not-found', 'code-check', 'shop', 'courses', 'scoring'].map(n => `dist/${n}.js`)) {
       const source = await readFile(file, 'utf8')
       if (!source.startsWith('"use client"')) await writeFile(file, `"use client";\n${source}`)
     }

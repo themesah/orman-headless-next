@@ -455,3 +455,129 @@ export interface TrackingCodeSite {
   max_length: number
   check_url?: string
 }
+
+// ---- Wave 4 (Headless 6.7): Cargo, Courses, Scoring ------------------------------------------------------------------------------
+
+/** `addons.cargo` of GET /site: where the cart lives and which gateways exist (handle and title only, never a key). */
+export interface CargoSite {
+  currency: string | null
+  /** `GET` the cart, `PATCH` its details, `DELETE` it. Per-person, `no-store`; a guest has a cart too (a cookie). */
+  cart: string
+  /** `POST {product, quantity, variant?}` adds; `PATCH|DELETE {url}/{id}` changes or removes a line. */
+  line_items: string
+  shipping: string
+  payment_gateways: string
+  /** `POST {payment_gateway}` → `200 {order_id, confirmation_url}` | `422 {errors}` | `404`. */
+  checkout: string
+  /** `GET` with the signed query of `confirmation_url` → the order. `{id}` is replaced. */
+  order: string
+  /** The frontend page the person lands on after paying (`headless.cargo.confirmation_path`), or null. */
+  confirmation_page: string | null
+  checkout_page: string | null
+  gateways: { handle: string; title: string }[]
+  cookie: string
+}
+
+/** `addons.cargo` of a product page. Prices are in minor units (pence, rial). */
+export interface CargoProductBlock {
+  price: number | null
+  currency: string | null
+  in_stock: boolean
+  variants: { key: string; name: string; price: number | null; in_stock: boolean }[]
+}
+
+/** One line of the cart as `GET /!/cargo/cart` answers it (`data.line_items[]`). Totals are formatted by the site's currency. */
+export interface CartLine {
+  id: string
+  quantity: number
+  variant: unknown
+  unit_price: string
+  total: string
+  product: ({ id: string; title: string; uri: string | null } & CargoProductBlock & Record<string, unknown>) | null
+}
+
+export interface CartData {
+  id: string
+  line_items: CartLine[]
+  sub_total: string
+  discount_total: string
+  tax_total: string
+  shipping_total: string
+  grand_total: string
+  is_free: boolean
+}
+
+/** `GET /!/cargo/orders/{id}` behind the signed query: the order without the person's details. Minor units. */
+export interface CargoOrder {
+  id: string
+  order_number: number
+  status: string
+  currency: string | null
+  sub_total: number
+  discount_total: number
+  tax_total: number
+  shipping_total: number
+  grand_total: number
+  line_items: { id: string; product: { id: string; title: string; uri: string | null } | null; variant: string | null; quantity: number; unit_price: number; total: number }[]
+}
+
+/** `addons.courses` of GET /site. */
+export interface CoursesSite {
+  me: string
+  lesson: string
+  complete: string
+  /** Only while the site allows free enrollment. */
+  enroll?: string
+}
+
+/** `addons.courses` of a lesson page: the page is a stub, the body comes from `CoursesSite.lesson` for an enrolled student. */
+export interface LessonPageBlock {
+  kind: 'lesson'
+  gated: true
+  course?: { id: string; title: string; uri: string | null }
+  position?: number
+  total?: number
+}
+
+/** `addons.courses` of a course page. */
+export interface CoursePageBlock {
+  kind: 'course'
+  lessons: { id: string; title: string; uri: string | null; position: number }[]
+  free_enrollment: boolean
+}
+
+/** `GET /!/courses/me`. */
+export interface MyCourses {
+  courses: { id: string; title: string; uri: string | null; lessons: number; completed: number; progress: number; next: { id: string; title: string; uri: string | null } | null }[]
+  completed: string[]
+}
+
+/** `POST /!/courses/lessons/{id}/complete`. */
+export interface LessonCompleted {
+  completed: boolean
+  lesson_id: string
+  course_id: string | null
+  next: { id: string; title: string; uri: string | null } | null
+  course_done: boolean
+}
+
+/** `addons.scoring` of GET /site: the badge catalogue and the three per-person addresses. */
+export interface ScoringSite {
+  my_score: string
+  my_tasks: string
+  submit: string
+  badge_types: { key: string; name: string; description: string | null; icon: string | null }[]
+}
+
+/** `GET /!/scoring/my-score`. */
+export interface MyScoreData {
+  balance: number
+  history: { amount: number; reason: string | null; source_type: string | null; created_at: string | null }[]
+  badges: { key: string; name: string; description: string | null; icon: string | null; awarded_at: string | null }[]
+}
+
+/** `GET /!/scoring/my-tasks`. */
+export interface MyTasksData {
+  tasks: { id: string | number; title: string; description: string | null; points: number; mode: string; submit_url: string | null }[]
+  pendingSubmissionTaskIds: (string | number)[]
+}

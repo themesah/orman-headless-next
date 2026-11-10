@@ -1,6 +1,6 @@
 {
   "name": "@orman/headless-next",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Frontend kit for Orman Headless sites on Next.js: typed read client, proxy helpers, first components.",
   "license": "UNLICENSED",
   "type": "module",
@@ -27,6 +27,9 @@
     "./analytics": { "types": "./dist/analytics.d.ts", "import": "./dist/analytics.js" },
     "./not-found": { "types": "./dist/not-found.d.ts", "import": "./dist/not-found.js" },
     "./code-check": { "types": "./dist/code-check.d.ts", "import": "./dist/code-check.js" },
+    "./shop": { "types": "./dist/shop.d.ts", "import": "./dist/shop.js" },
+    "./courses": { "types": "./dist/courses.d.ts", "import": "./dist/courses.js" },
+    "./scoring": { "types": "./dist/scoring.d.ts", "import": "./dist/scoring.js" },
     "./package.json": "./package.json"
   },
   "scripts": {

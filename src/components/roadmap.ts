@@ -6,9 +6,7 @@ export interface RoadmapEntry {
 }
 
 /**
- * Components the plan lists for the kit and that are not built yet. Nothing is exported for them: a stub that renders
+ * Components the plan lists for the kit and that are not built yet (none since 0.5.0: Cargo, Courses and Scoring were the last). Nothing is exported for them: a stub that renders
  * nothing would hide the gap, and the doctor is where a missing piece is reported.
  */
-export const COMPONENT_ROADMAP: readonly RoadmapEntry[] = [
-  { component: '<AddToCart> / <Cart>', wave: '6.7 Wave 4', needs: 'Cargo actions' },
-]
+export const COMPONENT_ROADMAP: readonly RoadmapEntry[] = []
