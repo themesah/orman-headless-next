@@ -532,7 +532,7 @@ export interface CoursesSite {
   me: string
   lesson: string
   complete: string
-  /** Only while the site allows free enrollment. */
+  /** `POST` here to join a course whose page says `free: true`; a paid course answers 403 (the site's own flow). */
   enroll?: string
 }
 
@@ -549,7 +549,8 @@ export interface LessonPageBlock {
 export interface CoursePageBlock {
   kind: 'course'
   lessons: { id: string; title: string; uri: string | null; position: number }[]
-  free_enrollment: boolean
+  /** The course's own "Free course" toggle: only then may a signed-in person enroll through `CoursesSite.enroll`. */
+  free: boolean
 }
 
 /** `GET /!/courses/me`. */

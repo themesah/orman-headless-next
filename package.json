@@ -1,6 +1,6 @@
 {
   "name": "@orman/headless-next",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Frontend kit for Orman Headless sites on Next.js: typed read client, proxy helpers, first components.",
   "license": "UNLICENSED",
   "type": "module",

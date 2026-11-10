@@ -187,14 +187,14 @@ describe('<CompleteLesson>', () => {
 describe('<CourseProgress>', () => {
   it('marks done lessons and the next one', async () => {
     routes({ 'GET /!/courses/me': () => json(200, { courses: [{ id: 'c1', title: 'C', uri: null, lessons: 2, completed: 1, progress: 0.5, next: { id: 'l2', title: 'Two', uri: null } }], completed: ['l1'] }) })
-    const { container } = render(<CourseProgress courseId="c1" course={{ kind: 'course', free_enrollment: false, lessons: [{ id: 'l1', title: 'One', uri: '/l/1', position: 1 }, { id: 'l2', title: 'Two', uri: '/l/2', position: 2 }] }} />)
+    const { container } = render(<CourseProgress courseId="c1" course={{ kind: 'course', free: false, lessons: [{ id: 'l1', title: 'One', uri: '/l/1', position: 1 }, { id: 'l2', title: 'Two', uri: '/l/2', position: 2 }] }} />)
     await waitFor(() => expect(container.querySelector('[data-done]')).not.toBeNull())
     expect(container.querySelector('[data-next]')?.textContent).toBe('Two')
   })
 
   it('shows the plain list to a guest', async () => {
     routes({ 'GET /!/courses/me': () => json(401, { message: 'Unauthenticated.' }) })
-    const { container } = render(<CourseProgress courseId="c1" course={{ kind: 'course', free_enrollment: false, lessons: [{ id: 'l1', title: 'One', uri: '/l/1', position: 1 }] }} />)
+    const { container } = render(<CourseProgress courseId="c1" course={{ kind: 'course', free: false, lessons: [{ id: 'l1', title: 'One', uri: '/l/1', position: 1 }] }} />)
     expect(container.querySelectorAll('li')).toHaveLength(1)
     expect(container.querySelector('[data-done]')).toBeNull()
   })

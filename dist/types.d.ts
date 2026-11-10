@@ -557,7 +557,7 @@ interface CoursesSite {
     me: string;
     lesson: string;
     complete: string;
-    /** Only while the site allows free enrollment. */
+    /** `POST` here to join a course whose page says `free: true`; a paid course answers 403 (the site's own flow). */
     enroll?: string;
 }
 /** `addons.courses` of a lesson page: the page is a stub, the body comes from `CoursesSite.lesson` for an enrolled student. */
@@ -581,7 +581,8 @@ interface CoursePageBlock {
         uri: string | null;
         position: number;
     }[];
-    free_enrollment: boolean;
+    /** The course's own "Free course" toggle: only then may a signed-in person enroll through `CoursesSite.enroll`. */
+    free: boolean;
 }
 /** `GET /!/courses/me`. */
 interface MyCourses {
